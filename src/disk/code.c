@@ -2,8 +2,8 @@
 #include <disk/elf.h>
 #include <cpu/register.h>
 #include <stdint.h>
-#include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
 inst_t *build_code()

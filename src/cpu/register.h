@@ -17,9 +17,12 @@ typedef struct REGISTER
 
     // 程序计数器
     uint64_t rip;
-} register_t;
+} reg_t;
 
+// fix error  register_t already used
+// /Library/Developer/CommandLineTools/SDKs/MacOSX12.3.sdk/usr/include/i386/types.h:90:33: note: previous definition is here
+// typedef int64_t                 register_t;
 // 全局只有一个 register
-register_t reg;
+reg_t reg;
 
 #endif
