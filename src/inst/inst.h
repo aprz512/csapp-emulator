@@ -33,7 +33,7 @@ typedef enum operand_format
     REG,
     M_IMM,
     M_REG,
-    M_IMM_REG2,
+    M_IMM_REG1,
     M_REG1_REG2,
     M_IMM_REG1_REG2,
     M_REG2_S,

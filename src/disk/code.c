@@ -30,29 +30,39 @@ inst_t *build_code()
         {
             MOVRR,
             {REG, 0, 0, reg.rdi, 0},
-            {REG, -0x8, 0, reg.rbp, 0},
+            {M_IMM_REG1, -0x18, 0, reg.rbp, 0},
         },
         {
             MOVRR,
             {REG, 0, 0, reg.rsi, 0},
-            {REG, -0x10, 0, reg.rbp, 0},
+            {M_IMM_REG1, -0x20, 0, reg.rbp, 0},
         },
 
         {
             MOVRR,
-            {REG, -0x8, 0, reg.rbp, 0},
+            {M_IMM_REG1, -0x18, 0, reg.rbp, 0},
             {REG, 0, 0, reg.rdx, 0},
         },
 
         {
             MOVRR,
-            {REG, -0x10, 0, reg.rbp, 0},
+            {M_IMM_REG1, -0x20, 0, reg.rbp, 0},
             {REG, 0, 0, reg.rax, 0},
         },
 
         {
             ADDRR,
             {REG, 0, 0, reg.rdx, 0},
+            {REG, 0, 0, reg.rax, 0},
+        },
+        {
+            MOVRR,
+            {REG, 0, 0, reg.rax, 0},
+            {M_IMM_REG1, -0x8, 0, reg.rbp, 0},
+        },
+        {
+            MOVRR,
+            {M_IMM_REG1, -0x8, 0, reg.rbp, 0},
             {REG, 0, 0, reg.rax, 0},
         },
         {
@@ -86,7 +96,7 @@ inst_t *build_code()
         {
             MOVRR,
             {REG, 0, 0, reg.rax, 0},
-            {REG, -0x8, 0, reg.rbp, 0},
+            {M_IMM_REG1, -0x8, 0, reg.rbp, 0},
         },
     };
 

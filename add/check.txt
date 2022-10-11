@@ -1,0 +1,63 @@
+(gdb) info r
+rax            0x1234   4660
+rbx            0x0      0
+rcx            0x5555554006c0   93824990840512
+rdx            0xabcd0000       2882338816
+rsi            0x7fffffffdd68   140737488346472
+rdi            0x1      1
+rbp            0x7fffffffdc80   0x7fffffffdc80
+rsp            0x7fffffffdc60   0x7fffffffdc60
+r8             0x7ffff7dced80   140737351839104
+r9             0x7ffff7dced80   140737351839104
+r10            0x0      0
+r11            0x0      0
+r12            0x555555400540   93824990840128
+r13            0x7fffffffdd60   140737488346464
+r14            0x0      0
+r15            0x0      0
+rip            0x55555540068c   0x55555540068c <main+33>
+eflags         0x206    [ PF IF ]
+cs             0x33     51
+ss             0x2b     43
+ds             0x0      0
+es             0x0      0
+fs             0x0      0
+gs             0x0      0
+
+(gdb) x/10x 0x7fffffffdc60
+0x7fffffffdc60: 0x554006c0      0x00005555      0x00001234      0x00000000
+0x7fffffffdc70: 0xabcd0000      0x00000000      0x00000000      0x00000000
+0x7fffffffdc80: 0x554006c0      0x00005555
+
+============================================================================
+
+(gdb) info r
+rax            0xabcd1234       2882343476
+rbx            0x0      0
+rcx            0x5555554006c0   93824990840512
+rdx            0x1234   4660
+rsi            0xabcd0000       2882338816
+rdi            0x1234   4660
+rbp            0x7fffffffdc80   0x7fffffffdc80
+rsp            0x7fffffffdc60   0x7fffffffdc60
+r8             0x7ffff7dced80   140737351839104
+r9             0x7ffff7dced80   140737351839104
+r10            0x0      0
+r11            0x0      0
+r12            0x555555400540   93824990840128
+r13            0x7fffffffdd60   140737488346464
+r14            0x0      0
+r15            0x0      0
+rip            0x55555540069b   0x55555540069b <main+48>
+eflags         0x202    [ IF ]
+cs             0x33     51
+ss             0x2b     43
+ds             0x0      0
+es             0x0      0
+fs             0x0      0
+gs             0x0      0
+
+(gdb) x/10x 0x7fffffffdc60
+0x7fffffffdc60: 0x554006c0      0x00005555      0x00001234      0x00000000
+0x7fffffffdc70: 0xabcd0000      0x00000000      0xabcd1234      0x00000000
+0x7fffffffdc80: 0x554006c0      0x00005555

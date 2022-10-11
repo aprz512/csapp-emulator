@@ -2,7 +2,8 @@
 
 long add(long a, long b)
 {
-    return a + b;
+    long ret = a + b;
+    return ret;
 }
 
 int main()
@@ -12,6 +13,6 @@ int main()
     long y = 0xabcd0000;
     long sum = add(x, y);
 
-    printf("sum = 0x%x\n", sum);
+    printf("sum = 0x%lx\n", sum);
     return 0;
 }

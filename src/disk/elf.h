@@ -3,7 +3,7 @@
 
 #include <inst/inst.h>
 
-#define INST_LEN 13
+#define INST_LEN 15
 
 inst_t program[INST_LEN];
 
