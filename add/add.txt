@@ -8,7 +8,7 @@ Dump of assembler code for function main:
    0x0000555555400684 <+25>:    mov    -0x10(%rbp),%rdx
    0x0000555555400688 <+29>:    mov    -0x18(%rbp),%rax
 
-
+   // main 函数只需要关注这4条指令
 => 0x000055555540068c <+33>:    mov    %rdx,%rsi
    0x000055555540068f <+36>:    mov    %rax,%rdi
    0x0000555555400692 <+39>:    callq  0x55555540064a <add>
