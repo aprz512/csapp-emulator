@@ -8,6 +8,6 @@
  * 
  * @return uint64_t 
  */
-uint64_t va2pa();
+uint64_t va2pa(uint64_t);
 
 #endif

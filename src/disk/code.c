@@ -1,11 +1,12 @@
-#include <inst/inst.h>
-#include <disk/elf.h>
-#include <cpu/register.h>
+#include "inst/inst.h"
+#include "disk/elf.h"
+#include "cpu/register.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-inst_t *build_code()
+
+inst_t *build_inst()
 {
 
     inst_t *result = malloc(sizeof(inst_t) * INST_LEN);
@@ -15,13 +16,14 @@ inst_t *build_code()
         return NULL;
     }
 
-    inst_t program[INST_LEN] = {
+    inst_t temp[INST_LEN] = {
 
         // add 汇编片段
         {
             PUSH,
             {REG, 0, 0, reg.rbp, 0},
-            {NONE, 0, 0, 0, 0}},
+            {NONE, 0, 0, 0, 0},
+        },
         {
             MOVRR,
             {REG, 0, 0, reg.rsp, 0},
@@ -102,12 +104,17 @@ inst_t *build_code()
 
     for (size_t i = 0; i < INST_LEN; i++)
     {
-        *(result + i) = *(program + i);
+        *(result + i) = *(temp + i);
     }
 
-    // 修正 result 里面的 CALL 指令的地址
-    inst_t call_inst = *(result + 11);
-    call_inst.src.imm = result;
+    for (size_t i = 0; i < INST_LEN; i++)
+    {
+        program[i] = temp[i];
+    }
+
+    // 修正 CALL 指令的地址
+    inst_t call_inst = program[13];
+    call_inst.src.imm = program;
 
     return program;
 }

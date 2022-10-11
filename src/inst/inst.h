@@ -87,7 +87,7 @@ typedef void (*inst_type_handler)(uint64_t, uint64_t);
 
 inst_type_handler inst_type_handler_table[INST_TYPE_LENGTH];
 
-void init_inst_type_handler_tabl();
+void init_inst_type_handler_table();
 void run_inst_cycle();
 
 void movrr_handler(uint64_t src, uint64_t dst);
@@ -96,6 +96,7 @@ void movmr_handler(uint64_t src, uint64_t dst);
 void push_handler(uint64_t src, uint64_t dst);
 void pop_handler(uint64_t src, uint64_t dst);
 void ret_handler(uint64_t src, uint64_t dst);
-void add_handler(uint64_t src, uint64_t dst);
+void addrr_handler(uint64_t src, uint64_t dst);
+void call_handler(uint64_t src, uint64_t dst);
 
 #endif

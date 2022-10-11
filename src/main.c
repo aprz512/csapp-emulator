@@ -1,19 +1,10 @@
 #include <stdio.h>
-#include "cpu/register.h"
 #include <assert.h>
 #include "memory/dram.h"
-
-typedef enum enum_size
-{
-    a,
-    b,
-    c,
-    d,
-    e,
-    f,
-    g,
-    end
-} enum_size_t;
+#include "inst/inst.h"
+#include "disk/elf.h"
+#include "cpu/mmu.h"
+#include "cpu/register.h"
 
 void init_register()
 {
@@ -26,6 +17,7 @@ void init_register()
     reg.rbp = 0x7fffffffdc80;
     reg.rsp = 0x7fffffffdc60;
 
+    // 将 rip 初始化为 main 函数的第一条指令地址
     reg.rip = 0x55555540068c;
 }
 
@@ -65,8 +57,18 @@ void check_memory()
 
 int main()
 {
-    // enum_size_t t;
-    printf("size = %d\n", end);
+    // 生成程序汇编指令
+    inst_t *inst = build_inst();
+
+    // 需要从 main 函数的第一个指令开始执行
+    reg.rip = (uint64_t)&program[11];
+
+    // 执行 x 条指令
+    size_t x = 1;
+    for (size_t i = 0; i < x; i++)
+    {
+        run_inst_cycle();
+    }
 
     return 0;
 }
