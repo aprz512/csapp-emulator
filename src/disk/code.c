@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 inst_t *build_code()
 {
 
@@ -59,6 +58,11 @@ inst_t *build_code()
         {
             POP,
             {REG, 0, 0, reg.rbp, 0},
+            {NONE, 0, 0, 0, 0},
+        },
+        {
+            RET,
+            {NONE, 0, 0, 0, 0},
             {NONE, 0, 0, 0, 0},
         },
 
