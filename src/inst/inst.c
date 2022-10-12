@@ -4,8 +4,74 @@
 #include <stdio.h>
 #include "cpu/register.h"
 #include "tools/print.h"
+#include "cpu/mmu.h"
+#include "memory/dram.h"
 
-static uint64_t decode_operand(operand_t operand) {}
+/**
+ * @brief 一定要返回地址，handler 才好处理
+ *
+ * @param operand
+ * @return uint64_t
+ */
+static uint64_t decode_operand(operand_t operand)
+{
+    if (operand.operand_format == IMM)
+    {
+        return operand.imm;
+    }
+    else if (operand.operand_format == REG)
+    {
+        return operand.reg_b;
+    }
+    else if (operand.operand_format == M_IMM)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.imm)];
+    }
+    else if (operand.operand_format == M_REG)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_b)];
+    }
+    else if (operand.operand_format == M_IMM_REG1)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_b + operand.imm)];
+    }
+    else if (operand.operand_format == M_REG1_REG2)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_b + operand.reg_i)];
+    }
+    else if (operand.operand_format == M_IMM_REG1_REG2)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_b + operand.imm + operand.reg_i)];
+    }
+    else if (operand.operand_format == M_REG2_S)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.scal * operand.reg_i)];
+    }
+    else if (operand.operand_format == M_IMM_REG2_S)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_i * operand.scal + operand.imm)];
+    }
+    else if (operand.operand_format == M_REG1_REG2_S)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.reg_b + operand.scal * operand.reg_i)];
+    }
+    else if (operand.operand_format == M_IMM_REG1_REG2_S)
+    {
+        // 返回物理内存的地址
+        return &physical_memory[va2pa(operand.imm + operand.reg_b + operand.scal * operand.reg_i)];
+    } else {
+        printf("unknown operand format: %d\n", operand.operand_format);
+        exit(-1);
+    }
+}
 
 /**
  * @brief 初始化指令处理函数表
@@ -42,15 +108,16 @@ void run_inst_cycle()
     print_stack();
 }
 
-void movrr_handler(uint64_t src, uint64_t dst) {
-    *(uint64_t*)dst = *(uint64_t*) src;
+void movrr_handler(uint64_t src, uint64_t dst)
+{
+    *(uint64_t *)dst = *(uint64_t *)src;
     reg.rip += sizeof(inst_t);
 }
 
-void movrm_handler(uint64_t src, uint64_t dst){}
-void movmr_handler(uint64_t src, uint64_t dst){}
-void push_handler(uint64_t src, uint64_t dst){}
-void pop_handler(uint64_t src, uint64_t dst){}
-void ret_handler(uint64_t src, uint64_t dst){}
-void addrr_handler(uint64_t src, uint64_t dst){}
-void call_handler(uint64_t src, uint64_t dst){}
+void movrm_handler(uint64_t src, uint64_t dst) {}
+void movmr_handler(uint64_t src, uint64_t dst) {}
+void push_handler(uint64_t src, uint64_t dst) {}
+void pop_handler(uint64_t src, uint64_t dst) {}
+void ret_handler(uint64_t src, uint64_t dst) {}
+void addrr_handler(uint64_t src, uint64_t dst) {}
+void call_handler(uint64_t src, uint64_t dst) {}
