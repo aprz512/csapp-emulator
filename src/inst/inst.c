@@ -1,7 +1,9 @@
 #include "inst/inst.h"
 #include "disk/elf.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include "cpu/register.h"
+#include "tools/print.h"
 
 static uint64_t decode_operand(operand_t operand) {}
 
@@ -33,6 +35,11 @@ void run_inst_cycle()
     // 执行
     inst_type_handler handler = inst_type_handler_table[inst->inst_type];
     handler(src, dst);
+
+    // 输出调试信息
+    printf("inst code: %s\n", inst->code);
+    print_register();
+    print_stack();
 }
 
 void movrr_handler(uint64_t src, uint64_t dst) {
