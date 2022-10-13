@@ -7,6 +7,6 @@
 
 inst_t program[INST_LEN];
 
-inst_t *build_inst();
+void build_inst();
 
 #endif

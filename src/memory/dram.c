@@ -1,5 +1,5 @@
 #include <memory/dram.h>
-
+#include <stdio.h>
 /**
  * @brief 读取物理地址上的值，也就是 physical_memory 的
  * 因为 physical_memory 是 8 bit 的数组，所以写的时候需要注意以下
@@ -26,6 +26,7 @@ uint64_t read64bits_dram(uint64_t paddr)
 
 void write64bits_dram(uint64_t paddr, uint64_t data)
 {
+    // printf(" paddr = %d\n", paddr);
     uint8_t mask = 0xff;
     physical_memory[paddr + 0] = (data >> 0) & mask;
     physical_memory[paddr + 1] = (data >> 8) & mask;

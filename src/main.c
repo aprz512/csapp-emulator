@@ -5,6 +5,7 @@
 #include "disk/elf.h"
 #include "cpu/mmu.h"
 #include "cpu/register.h"
+#include "tools/print.h"
 
 void init_register()
 {
@@ -58,10 +59,17 @@ void check_memory()
 int main()
 {
     // 生成程序汇编指令
-    inst_t *inst = build_inst();
+    build_inst();
+    init_inst_type_handler_table();
+
+    init_register();
+    init_memory();
 
     // 需要从 main 函数的第一个指令开始执行
     reg.rip = (uint64_t)&program[11];
+
+    print_register();
+    print_stack();
 
     // 执行 x 条指令
     size_t x = 1;

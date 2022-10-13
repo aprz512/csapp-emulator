@@ -15,9 +15,10 @@ void print_stack()
     // 将 physical_memory 解释为 uint64_t 的指针，就可以读一个 uint64_t 的值出来
     uint64_t *rsp = (uint64_t *)&physical_memory[va2pa(reg.rsp)];
 
-    printf("0x%016llx : %16llx %16llx", reg.rsp, (uint64_t)*rsp, (uint64_t) * (rsp + 1));
-    printf("0x%016llx : %16llx %16llx", reg.rsp, (uint64_t) * (rsp + 2), (uint64_t) * (rsp + 3));
-    printf("0x%016llx : %16llx", reg.rsp, (uint64_t) * (rsp + 4));
+    printf("=====================>>> addr <<<=====================");
+    printf("0x%016lx : %16lx %16lx\n", reg.rsp, (uint64_t)*rsp, (uint64_t) * (rsp + 1));
+    printf("0x%016lx : %16lx %16lx\n", reg.rsp, (uint64_t) * (rsp + 2), (uint64_t) * (rsp + 3));
+    printf("0x%016lx : %16lx\n", reg.rsp, (uint64_t) * (rsp + 4));
 }
 
 /**
@@ -26,9 +27,10 @@ void print_stack()
  */
 void print_register()
 {
-    printf("rax = %16llx\nrbx = %16llx\nrcx = %16llx\nrdx = %16llx\n",
+    printf("=====================>>> reg <<<=====================");
+    printf("rax = %16lx\nrbx = %16lx\nrcx = %16lx\nrdx = %16lx\n",
            reg.rax, reg.rbx, reg.rcx, reg.rdx);
-    printf("rsi = %16llx\nrdi = %16llx\nrbp = %16llx\nrsp = %16llx\n",
+    printf("rsi = %16lx\nrdi = %16lx\nrbp = %16lx\nrsp = %16lx\n",
            reg.rsi, reg.rdi, reg.rbp, reg.rsp);
-    printf("rip = %16llx\n", reg.rip);
+    printf("rip = %16lx\n", reg.rip);
 }
