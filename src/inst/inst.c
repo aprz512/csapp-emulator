@@ -17,7 +17,6 @@ static uint64_t decode_operand(operand_t operand)
 {
     if (operand.operand_format == IMM)
     {
-        printf("imm = %x, imm conv = %x\n", operand.imm, *((uint64_t *)&operand.imm));
         // 将 int64_t 转成 uint64_t (因为有负数，所以这里直接将 int64_t 解释为 uint64_t，使用的时候记得转回来)
         // return *((uint64_t *)&operand.imm);
         return *((uint64_t *)&operand.imm);
