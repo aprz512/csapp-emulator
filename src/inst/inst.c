@@ -17,7 +17,9 @@ static uint64_t decode_operand(operand_t operand)
 {
     if (operand.operand_format == IMM)
     {
+        printf("imm = %x, imm conv = %x\n", operand.imm, *((uint64_t *)&operand.imm));
         // 将 int64_t 转成 uint64_t (因为有负数，所以这里直接将 int64_t 解释为 uint64_t，使用的时候记得转回来)
+        // return *((uint64_t *)&operand.imm);
         return *((uint64_t *)&operand.imm);
     }
     else if (operand.operand_format == REG)
@@ -62,6 +64,10 @@ static uint64_t decode_operand(operand_t operand)
     {
         return operand.imm + *((uint64_t *)operand.reg_b) + *((uint64_t *)operand.reg_i) * operand.scal;
     }
+    else if (operand.operand_format == NONE)
+    {
+        // do nothing
+    }
     else
     {
         printf("unknown operand format: %d\n", operand.operand_format);
@@ -87,12 +93,20 @@ void init_inst_type_handler_table()
 
 void run_inst_cycle()
 {
-    // 取地址
+    // 取指令地址
     inst_t *inst = (inst_t *)reg.rip;
     // printf("program i code = %s\n", inst->code);
     // printf("program i type = %d\n", inst->inst_type);
-    // printf("program i dst = %d\n", inst->dst.operand_format);
-    // printf("program i src = %d\n", inst->src.operand_format);
+    // printf("program i src.operand_format = %d\n", inst->src.operand_format);
+    // printf("program i dst.operand_format = %d\n", inst->dst.operand_format);
+    // printf("program i src.imm = %x\n", inst->src.imm);
+    // printf("program i dst.imm = %x\n", inst->dst.imm);
+
+    // printf("program call code = %s\n", program[13].code);
+    // printf("program call src.imm = %x\n", program[13].src.imm);
+
+    // 输出调试信息
+    printf("\n run inst code: %s\n", inst->code);
 
     // 译码
     uint64_t src = decode_operand(inst->src);
@@ -105,23 +119,108 @@ void run_inst_cycle()
     inst_type_handler handler = inst_type_handler_table[inst->inst_type];
     handler(src, dst);
 
-    // 输出调试信息
-    printf("inst code: %s\n", inst->code);
     print_register();
     print_stack();
 }
 
+/**
+ * @brief mov %rax, %rbx
+ *
+ * @param src 寄存器的地址
+ * @param dst 寄存器的地址
+ */
 void movrr_handler(uint64_t src, uint64_t dst)
 {
-    // printf("movrr_handler runnig");
     *(uint64_t *)dst = *(uint64_t *)src;
     reg.rip += sizeof(inst_t);
 }
 
-void movrm_handler(uint64_t src, uint64_t dst) {}
-void movmr_handler(uint64_t src, uint64_t dst) {}
-void push_handler(uint64_t src, uint64_t dst) {}
-void pop_handler(uint64_t src, uint64_t dst) {}
-void ret_handler(uint64_t src, uint64_t dst) {}
-void addrr_handler(uint64_t src, uint64_t dst) {}
-void call_handler(uint64_t src, uint64_t dst) {}
+/**
+ * @brief mov %rax, 0x8(%rbx)
+ *
+ * @param src 寄存器地址
+ * @param dst 虚拟内存的地址
+ */
+void movrm_handler(uint64_t src, uint64_t dst)
+{
+    uint64_t value = *(uint64_t *)src;
+    write64bits_dram(va2pa(dst), value);
+    reg.rip += sizeof(inst_t);
+}
+
+/**
+ * @brief mov 0x8(%rax), %rbx
+ *
+ * @param src 虚拟内存的地址
+ * @param dst 寄存器的地址
+ */
+void movmr_handler(uint64_t src, uint64_t dst)
+{
+    uint64_t value = read64bits_dram(va2pa(src));
+    *(uint64_t *)dst = value;
+    reg.rip += sizeof(inst_t);
+}
+
+/**
+ * @brief push   %rbp
+ *
+ * @param src 寄存器地址
+ * @param dst 无
+ */
+void push_handler(uint64_t src, uint64_t dst)
+{
+    reg.rsp = reg.rsp - 0x8;
+    uint64_t value = *(uint64_t *)src;
+    write64bits_dram(va2pa(reg.rsp), value);
+    reg.rip += sizeof(inst_t);
+}
+
+/**
+ * @brief pop    %rbp
+ *
+ * @param src 寄存器地址
+ * @param dst 无
+ */
+void pop_handler(uint64_t src, uint64_t dst)
+{
+    uint64_t value = read64bits_dram(va2pa(reg.rsp));
+    *(uint64_t *)src = value;
+    reg.rsp = reg.rsp + 0x8;
+    reg.rip += sizeof(inst_t);
+}
+
+void ret_handler(uint64_t src, uint64_t dst)
+{
+    uint64_t value = read64bits_dram(va2pa(reg.rsp));
+    reg.rsp = reg.rsp + 0x8;
+    reg.rip = value;
+}
+
+/**
+ * @brief add    %rdx,%rax
+ *
+ * @param src 寄存器地址
+ * @param dst 寄存器地址
+ */
+void addrr_handler(uint64_t src, uint64_t dst)
+{
+    *(uint64_t *)dst = *(uint64_t *)src + *(uint64_t *)dst;
+    reg.rip += sizeof(inst_t);
+}
+
+/**
+ * @brief callq  0x555555400520 <printf@plt>
+ * 将下一条指令的地址压入栈中
+ *
+ * @param src 地址
+ * @param dst 无
+ */
+void call_handler(uint64_t src, uint64_t dst)
+{
+    reg.rsp = reg.rsp - 0x8;
+    // next inst addr
+    uint64_t value = reg.rip + sizeof(inst_t);
+    write64bits_dram(va2pa(reg.rsp), value);
+
+    reg.rip = src;
+}

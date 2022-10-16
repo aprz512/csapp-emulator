@@ -27,7 +27,7 @@ void check_register()
     assert(reg.rax == 0xabcd1234);
     assert(reg.rbx == 0x0);
     assert(reg.rcx == 0x5555554006c0);
-    assert(reg.rbx == 0x1234);
+    assert(reg.rdx == 0x1234);
     assert(reg.rsi == 0xabcd0000);
     assert(reg.rdi == 0x1234);
     assert(reg.rbp == 0x7fffffffdc80);
@@ -67,16 +67,23 @@ int main()
 
     // 需要从 main 函数的第一个指令开始执行
     reg.rip = (uint64_t)&program[11];
+    // 修正 CALL 指令的地址
+    program[13].src.imm = &program[0];
 
     print_register();
     print_stack();
 
     // 执行 x 条指令
-    size_t x = 1;
+    size_t x = 15;
     for (size_t i = 0; i < x; i++)
     {
         run_inst_cycle();
     }
+
+    check_register();
+    check_memory();
+
+    printf("success!!!\n");
 
     return 0;
 }

@@ -33,27 +33,27 @@ void build_inst()
             "mov    %rsp,%rbp",
         },
         {
-            MOVRR,
+            MOVRM,
             {REG, 0, 0, &reg.rdi, 0},
             {M_IMM_REG1, -0x18, 0, &reg.rbp, 0},
             "mov    %rdi,-0x18(%rbp)",
         },
         {
-            MOVRR,
+            MOVRM,
             {REG, 0, 0, &reg.rsi, 0},
             {M_IMM_REG1, -0x20, 0, &reg.rbp, 0},
             "mov    %rsi,-0x20(%rbp)",
         },
 
         {
-            MOVRR,
+            MOVMR,
             {M_IMM_REG1, -0x18, 0, &reg.rbp, 0},
             {REG, 0, 0, &reg.rdx, 0},
             "mov    -0x18(%rbp),%rdx",
         },
 
         {
-            MOVRR,
+            MOVMR,
             {M_IMM_REG1, -0x20, 0, &reg.rbp, 0},
             {REG, 0, 0, &reg.rax, 0},
             "mov    -0x20(%rbp),%rax",
@@ -66,13 +66,13 @@ void build_inst()
             "add    %rdx,%rax",
         },
         {
-            MOVRR,
+            MOVRM,
             {REG, 0, 0, &reg.rax, 0},
             {M_IMM_REG1, -0x8, 0, &reg.rbp, 0},
             "mov    %rax,-0x8(%rbp)",
         },
         {
-            MOVRR,
+            MOVMR,
             {M_IMM_REG1, -0x8, 0, &reg.rbp, 0},
             {REG, 0, 0, &reg.rax, 0},
             "mov    -0x8(%rbp),%rax",
@@ -106,12 +106,12 @@ void build_inst()
         {
             CALL,
             // 这里的地址要填 add 函数的第一个指令的地址，也就是数组的第一个元素的地址
-            {NONE, 0, 0, 0, 0},
+            {IMM, 0, 0, 0, 0},
             {NONE, 0, 0, 0, 0},
             "callq  0x55555540064a <add>",
         },
         {
-            MOVRR,
+            MOVRM,
             {REG, 0, 0, &reg.rax, 0},
             {M_IMM_REG1, -0x8, 0, &reg.rbp, 0},
             "mov    %rax,-0x8(%rbp)",
@@ -128,7 +128,4 @@ void build_inst()
         program[i] = temp[i];
     }
 
-    // 修正 CALL 指令的地址
-    inst_t call_inst = program[13];
-    call_inst.src.imm = program;
 }
