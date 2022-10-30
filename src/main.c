@@ -6,6 +6,7 @@
 #include "cpu/mmu.h"
 #include "cpu/register.h"
 #include "tools/print.h"
+#include "headers/common.h"
 
 void init_register()
 {
@@ -56,34 +57,35 @@ void check_memory()
     assert(read64bits_dram(va2pa(0x7fffffffdc80)) == 0x00005555554006c0);
 }
 
-int main()
-{
-    // 生成程序汇编指令
-    build_inst();
-    init_inst_type_handler_table();
+// int main()
+// {
 
-    init_register();
-    init_memory();
+    // // 生成程序汇编指令
+    // build_inst();
+    // init_inst_type_handler_table();
 
-    // 需要从 main 函数的第一个指令开始执行
-    reg.rip = (uint64_t)&program[11];
-    // 修正 CALL 指令的地址
-    program[13].src.imm = &program[0];
+    // init_register();
+    // init_memory();
 
-    print_register();
-    print_stack();
+    // // 需要从 main 函数的第一个指令开始执行
+    // reg.rip = (uint64_t)&program[11];
+    // // 修正 CALL 指令的地址
+    // program[13].src.imm = &program[0];
 
-    // 执行 x 条指令
-    size_t x = 15;
-    for (size_t i = 0; i < x; i++)
-    {
-        run_inst_cycle();
-    }
+    // print_register();
+    // print_stack();
 
-    check_register();
-    check_memory();
+    // // 执行 x 条指令
+    // size_t x = 15;
+    // for (size_t i = 0; i < x; i++)
+    // {
+    //     run_inst_cycle();
+    // }
 
-    printf("success!!!\n");
+    // check_register();
+    // check_memory();
 
-    return 0;
-}
+    // printf("success!!!\n");
+
+//     return 0;
+// }
