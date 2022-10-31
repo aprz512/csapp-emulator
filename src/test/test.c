@@ -30,9 +30,11 @@ void test_convert()
     printf("val6 = %lx, val6 = %ld\n", val6, val6);
 }
 
+void TestParseInstruction();
+
 int main()
 {
-    test_convert();
+    TestParseInstruction();
 
     return 0;
 }

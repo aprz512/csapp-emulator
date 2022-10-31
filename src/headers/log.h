@@ -11,6 +11,8 @@
 #define DEBUG_LOADER                0x1 << 7
 #define DEBUG_PARSEINST             0x1 << 8
 
-#define DEBUG_VERBOSE_SET           0x0
+#define DEBUG_VERBOSE_SET           0x0 | DEBUG_PARSEINST
+
+uint64_t my_log(uint64_t open_set, const char *format, ...);
 
 #endif

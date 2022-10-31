@@ -126,9 +126,9 @@ uint64_t string2uint_range(const char *src, int start, int end)
             {
                 state = 5;
                 num = current - '0';
-                printf("debug num = %d\n", num);
+                // printf("debug num = %d\n", num);
                 result = result * 16 + num;
-                printf("debug result = %d\n", result);
+                // printf("debug result = %d\n", result);
             }
             else if (current >= 'a' && current <= 'f')
             {
