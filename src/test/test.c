@@ -31,10 +31,11 @@ void test_convert()
 }
 
 void TestParseInstruction();
+void TestParseOperand();
 
 int main()
 {
-    TestParseInstruction();
-
+    // TestParseInstruction();
+    TestParseOperand();
     return 0;
 }

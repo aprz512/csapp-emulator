@@ -13,7 +13,7 @@ void build_inst()
     if (result == NULL)
     {
         printf("malloc failed.\n");
-        return NULL;
+        return;
     }
 
     inst_t temp[INST_LEN] = {

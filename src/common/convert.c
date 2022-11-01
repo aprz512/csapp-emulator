@@ -29,7 +29,7 @@ uint64_t string2uint_range(const char *src, int start, int end)
     uint64_t result = 0;
     uint64_t pre_val = 0;
     int sign_bit = 0;
-    for (size_t i = 0; i < end; i++)
+    for (size_t i = start; i < end; i++)
     {
         current = src[i];
 
@@ -148,10 +148,10 @@ uint64_t string2uint_range(const char *src, int start, int end)
             {
                 state = 5;
                 num = current - '0';
-                printf("debug num = %d\n", num);
+                // printf("debug num = %d\n", num);
                 pre_val = result;
                 result = result * 16 + num;
-                printf("debug result = %d\n", result);
+                // printf("debug result = %d\n", result);
                 if (pre_val > result)
                 {
                     error = 2;
