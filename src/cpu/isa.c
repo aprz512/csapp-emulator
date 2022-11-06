@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "headers/log.h"
 #include "headers/common.h"
+#include "headers/cpu.h"
 
 /*======================================*/
 /*      instruction set architecture    */
@@ -372,9 +373,9 @@ void TestParseOperand() {
         "0xabcd(%rsp,%rbx,8)",
     };
     
-    // printf("rax %p\n", &(cpu_reg.rax));
-    // printf("rsp %p\n", &(cpu_reg.rsp));
-    // printf("rbx %p\n", &(cpu_reg.rbx));
+    printf("rax %p\n", &(cpu_reg.rax));
+    printf("rsp %p\n", &(cpu_reg.rsp));
+    printf("rbx %p\n", &(cpu_reg.rbx));
     
     for (int i = 0; i < 11; ++ i)
     {
