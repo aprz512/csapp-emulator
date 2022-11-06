@@ -5,6 +5,7 @@
 #include "headers/log.h"
 #include "headers/common.h"
 #include "headers/cpu.h"
+#include "headers/mytrie.h"
 
 /*======================================*/
 /*      instruction set architecture    */
@@ -359,7 +360,8 @@ static void parse_operand(const char *str, od_t *od)
     my_log(DEBUG_PARSEINST, "operand : %s, parse result : [%d][%lx][%lx][%lx][%d]\n", str, od->type, od->imm, od->reg1, od->reg2, od->scal);
 }
 
-void TestParseOperand() {
+void TestParseOperand()
+{
     const char *strs[11] = {
         "$0x1234",
         "%rax",
@@ -373,12 +375,12 @@ void TestParseOperand() {
         "(%rsp,%rbx,8)",
         "0xabcd(%rsp,%rbx,8)",
     };
-    
+
     printf("rax %p\n", &(cpu_reg.rax));
     printf("rsp %p\n", &(cpu_reg.rsp));
     printf("rbx %p\n", &(cpu_reg.rbx));
-    
-    for (int i = 0; i < 11; ++ i)
+
+    for (int i = 0; i < 11; ++i)
     {
         od_t od;
         parse_operand(strs[i], &od);
@@ -392,6 +394,118 @@ void TestParseOperand() {
     }
 }
 
-static void parse_operator(const char *str, inst_t *inst)
+/*======================================*/
+/*      parse register and operator     */
+/*======================================*/
+
+static my_trie_node_t *register_tree;
+static my_trie_node_t *operator_tree;
+
+static void parse_register(const char *str, inst_t *inst)
 {
+    if (register_tree == NULL)
+    {
+        init_t register_init_elements[72] = {
+            {"%rax", (uint64_t)&cpu_reg.rax},
+            {"%rbx", (uint64_t)&cpu_reg.rbx},
+            {"%rcx", (uint64_t)&cpu_reg.rcx},
+            {"%rdx", (uint64_t)&cpu_reg.rdx},
+            {"%rsi", (uint64_t)&cpu_reg.rsi},
+            {"%rdi", (uint64_t)&cpu_reg.rdi},
+            {"%rbp", (uint64_t)&cpu_reg.rbp},
+            {"%rsp", (uint64_t)&cpu_reg.rsp},
+            {"%r8", (uint64_t)&cpu_reg.r8},
+            {"%r9", (uint64_t)&cpu_reg.r9},
+            {"%r10", (uint64_t)&cpu_reg.r10},
+            {"%r11", (uint64_t)&cpu_reg.r11},
+            {"%r12", (uint64_t)&cpu_reg.r12},
+            {"%r13", (uint64_t)&cpu_reg.r13},
+            {"%r14", (uint64_t)&cpu_reg.r14},
+            {"%r15", (uint64_t)&cpu_reg.r15},
+            {"%eax", (uint64_t) & (cpu_reg.eax)},
+            {"%ebx", (uint64_t) & (cpu_reg.ebx)},
+            {"%ecx", (uint64_t) & (cpu_reg.ecx)},
+            {"%edx", (uint64_t) & (cpu_reg.edx)},
+            {"%esi", (uint64_t) & (cpu_reg.esi)},
+            {"%edi", (uint64_t) & (cpu_reg.edi)},
+            {"%ebp", (uint64_t) & (cpu_reg.ebp)},
+            {"%esp", (uint64_t) & (cpu_reg.esp)},
+            {"%r8d", (uint64_t) & (cpu_reg.r8d)},
+            {"%r9d", (uint64_t) & (cpu_reg.r9d)},
+            {"%r10d", (uint64_t) & (cpu_reg.r10d)},
+            {"%r11d", (uint64_t) & (cpu_reg.r11d)},
+            {"%r12d", (uint64_t) & (cpu_reg.r12d)},
+            {"%r13d", (uint64_t) & (cpu_reg.r13d)},
+            {"%r14d", (uint64_t) & (cpu_reg.r14d)},
+            {"%r15d", (uint64_t) & (cpu_reg.r15d)},
+            {"%ax", (uint64_t) & (cpu_reg.ax)},
+            {"%bx", (uint64_t) & (cpu_reg.bx)},
+            {"%cx", (uint64_t) & (cpu_reg.cx)},
+            {"%dx", (uint64_t) & (cpu_reg.dx)},
+            {"%si", (uint64_t) & (cpu_reg.si)},
+            {"%di", (uint64_t) & (cpu_reg.di)},
+            {"%bp", (uint64_t) & (cpu_reg.bp)},
+            {"%sp", (uint64_t) & (cpu_reg.sp)},
+            {"%r8w", (uint64_t) & (cpu_reg.r8w)},
+            {"%r9w", (uint64_t) & (cpu_reg.r9w)},
+            {"%r10w", (uint64_t) & (cpu_reg.r10w)},
+            {"%r11w", (uint64_t) & (cpu_reg.r11w)},
+            {"%r12w", (uint64_t) & (cpu_reg.r12w)},
+            {"%r13w", (uint64_t) & (cpu_reg.r13w)},
+            {"%r14w", (uint64_t) & (cpu_reg.r14w)},
+            {"%r15w", (uint64_t) & (cpu_reg.r15w)},
+            {"%ah", (uint64_t) & (cpu_reg.ah)},
+            {"%bh", (uint64_t) & (cpu_reg.bh)},
+            {"%ch", (uint64_t) & (cpu_reg.ch)},
+            {"%dh", (uint64_t) & (cpu_reg.dh)},
+            {"%sih", (uint64_t) & (cpu_reg.sih)},
+            {"%dih", (uint64_t) & (cpu_reg.dih)},
+            {"%bph", (uint64_t) & (cpu_reg.bph)},
+            {"%sph", (uint64_t) & (cpu_reg.sph)},
+            {"%r8w", (uint64_t) & (cpu_reg.r8b)},
+            {"%r9w", (uint64_t) & (cpu_reg.r9b)},
+            {"%r10w", (uint64_t) & (cpu_reg.r10b)},
+            {"%r11w", (uint64_t) & (cpu_reg.r11b)},
+            {"%r12w", (uint64_t) & (cpu_reg.r12b)},
+            {"%r13w", (uint64_t) & (cpu_reg.r13b)},
+            {"%r14w", (uint64_t) & (cpu_reg.r14b)},
+            {"%r15w", (uint64_t) & (cpu_reg.r15b)},
+            {"%al", (uint64_t) & (cpu_reg.al)},
+            {"%bl", (uint64_t) & (cpu_reg.bl)},
+            {"%cl", (uint64_t) & (cpu_reg.cl)},
+            {"%dl", (uint64_t) & (cpu_reg.dl)},
+            {"%sil", (uint64_t) & (cpu_reg.sil)},
+            {"%dil", (uint64_t) & (cpu_reg.dil)},
+            {"%bpl", (uint64_t) & (cpu_reg.bpl)},
+            {"%spl", (uint64_t) & (cpu_reg.spl)},
+        };
+        init_register_tree(register_tree, register_init_elements, sizeof(register_init_elements) / sizeof(init_t));
+    }
+
+    return register_address(register_tree, str);
+}
+
+static int parse_operator(const char *str)
+{
+
+    if (operator_tree == NULL)
+    {
+        init_t operator_init_elements[11] = {
+            {"mov", 0},
+            {"push", 1},
+            {"pop", 2},
+            {"leave", 3},
+            {"callq", 4},
+            {"retq", 5},
+            {"add", 6},
+            {"sub", 7},
+            {"cmp", 8},
+            {"jne", 9},
+            {"jmp", 10},
+        };
+
+        init_operator_tree(operator_tree, operator_init_elements, sizeof(operator_init_elements) / sizeof(init_t));
+    }
+
+    return operator_type(operator_tree, str);
 }

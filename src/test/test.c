@@ -33,13 +33,14 @@ void test_convert()
 
 void TestParseInstruction();
 void TestParseOperand();
-void TestRegisterTrie();
-
 
 int main()
 {
     // TestParseInstruction();
     // TestParseOperand();
     TestRegisterTrie();
+
+    // TestOperatorTree();
+    // TestOperatorTree2();
     return 0;
 }
