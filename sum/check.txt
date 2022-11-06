@@ -1,0 +1,96 @@
+(gdb) disass
+Dump of assembler code for function main:
+   0x0000555555400680 <+0>:     push   %rbp
+   0x0000555555400681 <+1>:     mov    %rsp,%rbp
+=> 0x0000555555400684 <+4>:     mov    $0x5,%edi
+   0x0000555555400689 <+9>:     callq  0x55555540064a <sum>
+   0x000055555540068e <+14>:    mov    %rax,%rsi
+   0x0000555555400691 <+17>:    lea    0x9c(%rip),%rdi        # 0x555555400734
+   0x0000555555400698 <+24>:    mov    $0x0,%eax
+   0x000055555540069d <+29>:    callq  0x555555400520 <printf@plt>
+   0x00005555554006a2 <+34>:    mov    $0x0,%eax
+   0x00005555554006a7 <+39>:    pop    %rbp
+   0x00005555554006a8 <+40>:    retq   
+End of assembler dump.
+
+(gdb) info r
+rax            0x555555400680   93824990840448
+rbx            0x0      0
+rcx            0x5555554006b0   93824990840496
+rdx            0x7fffffffdc88   140737488346248
+rsi            0x7fffffffdc78   140737488346232
+rdi            0x1      1
+rbp            0x7fffffffdb90   0x7fffffffdb90
+rsp            0x7fffffffdb90   0x7fffffffdb90
+r8             0x7ffff7dced80   140737351839104
+r9             0x7ffff7dced80   140737351839104
+r10            0x1      1
+r11            0x0      0
+r12            0x555555400540   93824990840128
+r13            0x7fffffffdc70   140737488346224
+r14            0x0      0
+r15            0x0      0
+rip            0x555555400684   0x555555400684 <main+4>
+eflags         0x246    [ PF ZF IF ]
+cs             0x33     51
+ss             0x2b     43
+ds             0x0      0
+es             0x0      0
+fs             0x0      0
+gs             0x0      0
+
+// 内存的值不太好比较，可以自己观察一下 call sum 结束前后 rsp 附近的值
+// 虽然 rsp 在函数调用完成后会还原，但是它在内存上做的更改还是存在的，所以可以看到函数的调用值，比如：
+0x7fffffffdaf0: 0xffffffff      0x00000000      0x00000001      0x00000000      <= 1
+0x7fffffffdb00: 0xffffdb20      0x00007fff      0x55400674      0x00005555
+0x7fffffffdb10: 0x00000000      0x00000000      0x00000002      0x00000000      <= 2    
+0x7fffffffdb20: 0xffffdb40      0x00007fff      0x55400674      0x00005555
+0x7fffffffdb30: 0x00000009      0x00000000      0x00000003      0x00000000      <= 3
+0x7fffffffdb40: 0xffffdb60      0x00007fff      0x55400674      0x00005555
+0x7fffffffdb50: 0x00000001      0x00000000      0x00000004      0x00000000      <= 4
+0x7fffffffdb60: 0xffffdb80      0x00007fff      0x55400674      0x00005555
+0x7fffffffdb70: 0x554006b0      0x00005555      0x00000005      0x00000000      <= 5
+0x7fffffffdb80: 0xffffdb90      0x00007fff      0x5540068e      0x00005555
+0x7fffffffdb90: 0x554006b0      0x00005555      0xf7a03c87      0x00007fff
+
+
+(gdb) disass
+Dump of assembler code for function main:
+   0x0000555555400680 <+0>:     push   %rbp
+   0x0000555555400681 <+1>:     mov    %rsp,%rbp
+   0x0000555555400684 <+4>:     mov    $0x5,%edi
+   0x0000555555400689 <+9>:     callq  0x55555540064a <sum>
+=> 0x000055555540068e <+14>:    mov    %rax,%rsi
+   0x0000555555400691 <+17>:    lea    0x9c(%rip),%rdi        # 0x555555400734
+   0x0000555555400698 <+24>:    mov    $0x0,%eax
+   0x000055555540069d <+29>:    callq  0x555555400520 <printf@plt>
+   0x00005555554006a2 <+34>:    mov    $0x0,%eax
+   0x00005555554006a7 <+39>:    pop    %rbp
+   0x00005555554006a8 <+40>:    retq   
+End of assembler dump.
+
+(gdb) info r
+rax            0xf      15
+rbx            0x0      0
+rcx            0x5555554006b0   93824990840496
+rdx            0xa      10
+rsi            0x7fffffffdc78   140737488346232
+rdi            0x1      1
+rbp            0x7fffffffdb90   0x7fffffffdb90
+rsp            0x7fffffffdb90   0x7fffffffdb90
+r8             0x7ffff7dced80   140737351839104
+r9             0x7ffff7dced80   140737351839104
+r10            0x1      1
+r11            0x0      0
+r12            0x555555400540   93824990840128
+r13            0x7fffffffdc70   140737488346224
+r14            0x0      0
+r15            0x0      0
+rip            0x55555540068e   0x55555540068e <main+14>
+eflags         0x206    [ PF IF ]
+cs             0x33     51
+ss             0x2b     43
+ds             0x0      0
+es             0x0      0
+fs             0x0      0
+gs             0x0      0

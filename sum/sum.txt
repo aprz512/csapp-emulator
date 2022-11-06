@@ -1,0 +1,33 @@
+Dump of assembler code for function main:
+   0x0000555555400680 <+0>:     push   %rbp
+   0x0000555555400681 <+1>:     mov    %rsp,%rbp
+=> 0x0000555555400684 <+4>:     mov    $0x5,%edi
+   0x0000555555400689 <+9>:     callq  0x55555540064a <sum>
+   0x000055555540068e <+14>:    mov    %rax,%rsi
+   0x0000555555400691 <+17>:    lea    0x9c(%rip),%rdi        # 0x555555400734
+   0x0000555555400698 <+24>:    mov    $0x0,%eax
+   0x000055555540069d <+29>:    callq  0x555555400520 <printf@plt>
+   0x00005555554006a2 <+34>:    mov    $0x0,%eax
+   0x00005555554006a7 <+39>:    pop    %rbp
+   0x00005555554006a8 <+40>:    retq   
+End of assembler dump.
+
+Dump of assembler code for function sum:
+   0x000055555540064a <+0>:     push   %rbp
+   0x000055555540064b <+1>:     mov    %rsp,%rbp
+   0x000055555540064e <+4>:     sub    $0x10,%rsp
+   0x0000555555400652 <+8>:     mov    %rdi,-0x8(%rbp)
+=> 0x0000555555400656 <+12>:    cmpq   $0x1,-0x8(%rbp)
+   0x000055555540065b <+17>:    jne    0x555555400664 <sum+26>
+   0x000055555540065d <+19>:    mov    $0x1,%eax
+   0x0000555555400662 <+24>:    jmp    0x55555540067e <sum+52>
+   0x0000555555400664 <+26>:    mov    -0x8(%rbp),%rax
+   0x0000555555400668 <+30>:    sub    $0x1,%rax
+   0x000055555540066c <+34>:    mov    %rax,%rdi
+   0x000055555540066f <+37>:    callq  0x55555540064a <sum>
+   0x0000555555400674 <+42>:    mov    %rax,%rdx
+   0x0000555555400677 <+45>:    mov    -0x8(%rbp),%rax
+   0x000055555540067b <+49>:    add    %rdx,%rax
+   0x000055555540067e <+52>:    leaveq 
+   0x000055555540067f <+53>:    retq   
+End of assembler dump.
