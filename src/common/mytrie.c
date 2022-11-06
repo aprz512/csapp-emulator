@@ -70,7 +70,7 @@ void init_register_tree(my_trie_node_t **register_tree, init_t *elements, size_t
     }
 }
 
-uint64_t register_address(my_trie_node_t *register_tree, char *reg)
+uint64_t register_address(my_trie_node_t *register_tree, const char *reg)
 {
     my_trie_node_t *target = register_tree;
     int index = 0;
@@ -226,7 +226,7 @@ void init_operator_tree(my_trie_node_t **operator_tree, init_t *elements, size_t
     }
 }
 
-int operator_type(const my_trie_node_t const *operator_tree, char *op)
+int operator_type(my_trie_node_t *operator_tree, const char *op)
 {
     my_trie_node_t *target = operator_tree;
     int index = 0;
@@ -288,7 +288,6 @@ void TestOperatorTree()
 
     my_trie_node_t *tree = NULL;
 
-    printf("%d\n", sizeof(init_elements) / sizeof(init_t));
     init_operator_tree(&tree, init_elements, sizeof(init_elements) / sizeof(init_t));
 
     printf("00\n");

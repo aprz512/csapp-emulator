@@ -41,11 +41,11 @@ typedef struct
 static my_trie_node_t *create_node(char letter, bool leaf, bool reg, uint64_t addr, int type);
 
 void init_register_tree(my_trie_node_t **register_tree, init_t *elements, size_t node_len);
-uint64_t register_address(my_trie_node_t *register_tree, char *reg);
+uint64_t register_address(my_trie_node_t *register_tree, const char *reg);
 void TestRegisterTrie();
 
 void init_operator_tree(my_trie_node_t **operator_tree, init_t *elements, size_t node_len);
-int operator_type(const my_trie_node_t const *operator_tree, char *op);
+int operator_type(my_trie_node_t *operator_tree, const char *op);
 void TestOperatorTree();
 void TestOperatorTree2();
 

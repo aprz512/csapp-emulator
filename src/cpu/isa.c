@@ -76,133 +76,131 @@ typedef struct INST_STRUCT
 /*      parse assembly instruction      */
 /*======================================*/
 
-static void parse_instruction(const char *str, inst_t *inst)
+/*======================================*/
+/*      parse register and operator     */
+/*======================================*/
+
+static my_trie_node_t *register_trie = NULL;
+static my_trie_node_t *operator_trie = NULL;
+
+static uint64_t parse_register(const char *str)
 {
-    size_t str_len = strlen(str);
-
-    char op[64] = {'\0'};
-    size_t op_len = 0;
-
-    char od1[64] = {'\0'};
-    size_t od1_len = 0;
-
-    char od2[64] = {'\0'};
-    size_t od2_len = 0;
-
-    char cur = 0;
-    int comma_count = 0;
-    int brackets_count = 0;
-    int state = 0;
-    for (size_t i = 0; i < str_len; i++)
+    if (register_trie == NULL)
     {
-        cur = str[i];
-
-        // 数括号和逗号
-        if (cur == '(' || cur == ')')
-        {
-            brackets_count++;
-        }
-        else if (cur == ',')
-        {
-            if (brackets_count == 0 || brackets_count == 2)
-            {
-                comma_count++;
-            }
-        }
-
-        // 状态变化
-        if (state == 0)
-        {
-            if (cur != ' ')
-            {
-                state = 1;
-            }
-        }
-        else if (state == 1)
-        {
-            if (cur == ' ')
-            {
-                state = 2;
-            }
-        }
-        else if (state == 2)
-        {
-            if (cur != ' ')
-            {
-                state = 3;
-            }
-        }
-        else if (state == 3)
-        {
-            // 解析 od1，以逗号为标准
-            if (comma_count == 1)
-            {
-                state = 4;
-            }
-        }
-        else if (state == 4)
-        {
-            if (cur != ',')
-            {
-                state = 5;
-            }
-        }
-        else if (state == 5)
-        {
-            if (cur == ' ')
-            {
-                state = 6;
-            }
-        }
-
-        // 计算 op od1 od2
-        if (state == 1)
-        {
-            op[op_len++] = cur;
-        }
-        else if (state == 3)
-        {
-            od1[od1_len++] = cur;
-        }
-        else if (state == 5)
-        {
-            od2[od2_len++] = cur;
-        }
+        init_t register_init_elements[72] = {
+            {"%rax", (uint64_t)&cpu_reg.rax},
+            {"%rbx", (uint64_t)&cpu_reg.rbx},
+            {"%rcx", (uint64_t)&cpu_reg.rcx},
+            {"%rdx", (uint64_t)&cpu_reg.rdx},
+            {"%rsi", (uint64_t)&cpu_reg.rsi},
+            {"%rdi", (uint64_t)&cpu_reg.rdi},
+            {"%rbp", (uint64_t)&cpu_reg.rbp},
+            {"%rsp", (uint64_t)&cpu_reg.rsp},
+            {"%r8", (uint64_t)&cpu_reg.r8},
+            {"%r9", (uint64_t)&cpu_reg.r9},
+            {"%r10", (uint64_t)&cpu_reg.r10},
+            {"%r11", (uint64_t)&cpu_reg.r11},
+            {"%r12", (uint64_t)&cpu_reg.r12},
+            {"%r13", (uint64_t)&cpu_reg.r13},
+            {"%r14", (uint64_t)&cpu_reg.r14},
+            {"%r15", (uint64_t)&cpu_reg.r15},
+            {"%eax", (uint64_t) & (cpu_reg.eax)},
+            {"%ebx", (uint64_t) & (cpu_reg.ebx)},
+            {"%ecx", (uint64_t) & (cpu_reg.ecx)},
+            {"%edx", (uint64_t) & (cpu_reg.edx)},
+            {"%esi", (uint64_t) & (cpu_reg.esi)},
+            {"%edi", (uint64_t) & (cpu_reg.edi)},
+            {"%ebp", (uint64_t) & (cpu_reg.ebp)},
+            {"%esp", (uint64_t) & (cpu_reg.esp)},
+            {"%r8d", (uint64_t) & (cpu_reg.r8d)},
+            {"%r9d", (uint64_t) & (cpu_reg.r9d)},
+            {"%r10d", (uint64_t) & (cpu_reg.r10d)},
+            {"%r11d", (uint64_t) & (cpu_reg.r11d)},
+            {"%r12d", (uint64_t) & (cpu_reg.r12d)},
+            {"%r13d", (uint64_t) & (cpu_reg.r13d)},
+            {"%r14d", (uint64_t) & (cpu_reg.r14d)},
+            {"%r15d", (uint64_t) & (cpu_reg.r15d)},
+            {"%ax", (uint64_t) & (cpu_reg.ax)},
+            {"%bx", (uint64_t) & (cpu_reg.bx)},
+            {"%cx", (uint64_t) & (cpu_reg.cx)},
+            {"%dx", (uint64_t) & (cpu_reg.dx)},
+            {"%si", (uint64_t) & (cpu_reg.si)},
+            {"%di", (uint64_t) & (cpu_reg.di)},
+            {"%bp", (uint64_t) & (cpu_reg.bp)},
+            {"%sp", (uint64_t) & (cpu_reg.sp)},
+            {"%r8w", (uint64_t) & (cpu_reg.r8w)},
+            {"%r9w", (uint64_t) & (cpu_reg.r9w)},
+            {"%r10w", (uint64_t) & (cpu_reg.r10w)},
+            {"%r11w", (uint64_t) & (cpu_reg.r11w)},
+            {"%r12w", (uint64_t) & (cpu_reg.r12w)},
+            {"%r13w", (uint64_t) & (cpu_reg.r13w)},
+            {"%r14w", (uint64_t) & (cpu_reg.r14w)},
+            {"%r15w", (uint64_t) & (cpu_reg.r15w)},
+            {"%ah", (uint64_t) & (cpu_reg.ah)},
+            {"%bh", (uint64_t) & (cpu_reg.bh)},
+            {"%ch", (uint64_t) & (cpu_reg.ch)},
+            {"%dh", (uint64_t) & (cpu_reg.dh)},
+            {"%sih", (uint64_t) & (cpu_reg.sih)},
+            {"%dih", (uint64_t) & (cpu_reg.dih)},
+            {"%bph", (uint64_t) & (cpu_reg.bph)},
+            {"%sph", (uint64_t) & (cpu_reg.sph)},
+            {"%r8w", (uint64_t) & (cpu_reg.r8b)},
+            {"%r9w", (uint64_t) & (cpu_reg.r9b)},
+            {"%r10w", (uint64_t) & (cpu_reg.r10b)},
+            {"%r11w", (uint64_t) & (cpu_reg.r11b)},
+            {"%r12w", (uint64_t) & (cpu_reg.r12b)},
+            {"%r13w", (uint64_t) & (cpu_reg.r13b)},
+            {"%r14w", (uint64_t) & (cpu_reg.r14b)},
+            {"%r15w", (uint64_t) & (cpu_reg.r15b)},
+            {"%al", (uint64_t) & (cpu_reg.al)},
+            {"%bl", (uint64_t) & (cpu_reg.bl)},
+            {"%cl", (uint64_t) & (cpu_reg.cl)},
+            {"%dl", (uint64_t) & (cpu_reg.dl)},
+            {"%sil", (uint64_t) & (cpu_reg.sil)},
+            {"%dil", (uint64_t) & (cpu_reg.dil)},
+            {"%bpl", (uint64_t) & (cpu_reg.bpl)},
+            {"%spl", (uint64_t) & (cpu_reg.spl)},
+        };
+        init_register_tree(&register_trie, register_init_elements, sizeof(register_init_elements) / sizeof(init_t));
     }
 
-    my_log(DEBUG_PARSEINST, "[%s] [%s] [%s]\n", op, od1, od2);
-    // log(DEBUG_PARSEINST, "[%s (%d)] [%s (%d)] [%s (%d)]\n", op, inst->op, od1, inst->src.type, od2, inst->dst.type);
+    return register_address(register_trie, str);
 }
 
-void TestParseInstruction()
+static int parse_operator(const char *str)
 {
-    char assembly[15][MAX_INSTRUCTION_CHAR] = {
-        "push   %rbp",                    // 0
-        "mov    %rsp,%rbp",               // 1
-        "mov    %rdi,-0x18(%rbp)",        // 2
-        "mov    %rsi,-0x20(%rbp)",        // 3
-        "mov    -0x18(%rbp,%rax,8),%rdx", // 4
-        "mov    -0x20(%rbp),%rax",        // 5
-        "add    %rdx,%rax",               // 6
-        "mov    %rax,-0x8(%rbp)",         // 7
-        "mov    -0x8(%rbp),%rax",         // 8
-        "pop    %rbp",                    // 9
-        "retq",                           // 10
-        "mov    %rdx,%rsi",               // 11
-        "mov    %rax,%rdi",               // 12
-        "callq  0",                       // 13
-        "mov    %rax,-0x8(%rbp)",         // 14
-    };
 
-    inst_t inst;
-    for (int i = 0; i < 15; ++i)
+    if (operator_trie == NULL)
     {
-        parse_instruction(assembly[i], &inst);
+        init_t operator_init_elements[11] = {
+            {"mov", 0},
+            {"push", 1},
+            {"pop", 2},
+            {"leave", 3},
+            {"callq", 4},
+            {"retq", 5},
+            {"add", 6},
+            {"sub", 7},
+            {"cmp", 8},
+            {"jne", 9},
+            {"jmp", 10},
+        };
+
+        init_operator_tree(&operator_trie, operator_init_elements, sizeof(operator_init_elements) / sizeof(init_t));
     }
+
+    return operator_type(operator_trie, str);
 }
 
 static void parse_operand(const char *str, od_t *od)
 {
+    // clear od struct
+    od->type = -1;
+    od->imm = 0;
+    od->reg1 = 0;
+    od->reg2 = 0;
+    od->scal = 0;
+
     if (str[0] == '$')
     {
         od->type = IMM;
@@ -211,8 +209,7 @@ static void parse_operand(const char *str, od_t *od)
     else if (str[0] == '%')
     {
         od->type = REG;
-        // TODO 寄存器的地址
-        od->reg1 = 0;
+        od->reg1 = parse_register(str);
     }
     else
     {
@@ -283,14 +280,12 @@ static void parse_operand(const char *str, od_t *od)
 
         if (reg1_len > 0)
         {
-            // 找到寄存器的地址
-            od->reg1 = 0;
+            od->reg1 = parse_register(reg1);
         }
 
         if (reg2_len > 0)
         {
-            // 找到寄存器的地址
-            od->reg2 = 0;
+            od->reg2 = parse_register(reg2);
         }
 
         if (scale_len > 0)
@@ -394,118 +389,142 @@ void TestParseOperand()
     }
 }
 
-/*======================================*/
-/*      parse register and operator     */
-/*======================================*/
 
-static my_trie_node_t *register_tree;
-static my_trie_node_t *operator_tree;
-
-static void parse_register(const char *str, inst_t *inst)
+static void parse_instruction(const char *str, inst_t *inst)
 {
-    if (register_tree == NULL)
+    size_t str_len = strlen(str);
+
+    char op[64] = {'\0'};
+    size_t op_len = 0;
+
+    char od1[64] = {'\0'};
+    size_t od1_len = 0;
+
+    char od2[64] = {'\0'};
+    size_t od2_len = 0;
+
+    char cur = 0;
+    int comma_count = 0;
+    int brackets_count = 0;
+    int state = 0;
+    for (size_t i = 0; i < str_len; i++)
     {
-        init_t register_init_elements[72] = {
-            {"%rax", (uint64_t)&cpu_reg.rax},
-            {"%rbx", (uint64_t)&cpu_reg.rbx},
-            {"%rcx", (uint64_t)&cpu_reg.rcx},
-            {"%rdx", (uint64_t)&cpu_reg.rdx},
-            {"%rsi", (uint64_t)&cpu_reg.rsi},
-            {"%rdi", (uint64_t)&cpu_reg.rdi},
-            {"%rbp", (uint64_t)&cpu_reg.rbp},
-            {"%rsp", (uint64_t)&cpu_reg.rsp},
-            {"%r8", (uint64_t)&cpu_reg.r8},
-            {"%r9", (uint64_t)&cpu_reg.r9},
-            {"%r10", (uint64_t)&cpu_reg.r10},
-            {"%r11", (uint64_t)&cpu_reg.r11},
-            {"%r12", (uint64_t)&cpu_reg.r12},
-            {"%r13", (uint64_t)&cpu_reg.r13},
-            {"%r14", (uint64_t)&cpu_reg.r14},
-            {"%r15", (uint64_t)&cpu_reg.r15},
-            {"%eax", (uint64_t) & (cpu_reg.eax)},
-            {"%ebx", (uint64_t) & (cpu_reg.ebx)},
-            {"%ecx", (uint64_t) & (cpu_reg.ecx)},
-            {"%edx", (uint64_t) & (cpu_reg.edx)},
-            {"%esi", (uint64_t) & (cpu_reg.esi)},
-            {"%edi", (uint64_t) & (cpu_reg.edi)},
-            {"%ebp", (uint64_t) & (cpu_reg.ebp)},
-            {"%esp", (uint64_t) & (cpu_reg.esp)},
-            {"%r8d", (uint64_t) & (cpu_reg.r8d)},
-            {"%r9d", (uint64_t) & (cpu_reg.r9d)},
-            {"%r10d", (uint64_t) & (cpu_reg.r10d)},
-            {"%r11d", (uint64_t) & (cpu_reg.r11d)},
-            {"%r12d", (uint64_t) & (cpu_reg.r12d)},
-            {"%r13d", (uint64_t) & (cpu_reg.r13d)},
-            {"%r14d", (uint64_t) & (cpu_reg.r14d)},
-            {"%r15d", (uint64_t) & (cpu_reg.r15d)},
-            {"%ax", (uint64_t) & (cpu_reg.ax)},
-            {"%bx", (uint64_t) & (cpu_reg.bx)},
-            {"%cx", (uint64_t) & (cpu_reg.cx)},
-            {"%dx", (uint64_t) & (cpu_reg.dx)},
-            {"%si", (uint64_t) & (cpu_reg.si)},
-            {"%di", (uint64_t) & (cpu_reg.di)},
-            {"%bp", (uint64_t) & (cpu_reg.bp)},
-            {"%sp", (uint64_t) & (cpu_reg.sp)},
-            {"%r8w", (uint64_t) & (cpu_reg.r8w)},
-            {"%r9w", (uint64_t) & (cpu_reg.r9w)},
-            {"%r10w", (uint64_t) & (cpu_reg.r10w)},
-            {"%r11w", (uint64_t) & (cpu_reg.r11w)},
-            {"%r12w", (uint64_t) & (cpu_reg.r12w)},
-            {"%r13w", (uint64_t) & (cpu_reg.r13w)},
-            {"%r14w", (uint64_t) & (cpu_reg.r14w)},
-            {"%r15w", (uint64_t) & (cpu_reg.r15w)},
-            {"%ah", (uint64_t) & (cpu_reg.ah)},
-            {"%bh", (uint64_t) & (cpu_reg.bh)},
-            {"%ch", (uint64_t) & (cpu_reg.ch)},
-            {"%dh", (uint64_t) & (cpu_reg.dh)},
-            {"%sih", (uint64_t) & (cpu_reg.sih)},
-            {"%dih", (uint64_t) & (cpu_reg.dih)},
-            {"%bph", (uint64_t) & (cpu_reg.bph)},
-            {"%sph", (uint64_t) & (cpu_reg.sph)},
-            {"%r8w", (uint64_t) & (cpu_reg.r8b)},
-            {"%r9w", (uint64_t) & (cpu_reg.r9b)},
-            {"%r10w", (uint64_t) & (cpu_reg.r10b)},
-            {"%r11w", (uint64_t) & (cpu_reg.r11b)},
-            {"%r12w", (uint64_t) & (cpu_reg.r12b)},
-            {"%r13w", (uint64_t) & (cpu_reg.r13b)},
-            {"%r14w", (uint64_t) & (cpu_reg.r14b)},
-            {"%r15w", (uint64_t) & (cpu_reg.r15b)},
-            {"%al", (uint64_t) & (cpu_reg.al)},
-            {"%bl", (uint64_t) & (cpu_reg.bl)},
-            {"%cl", (uint64_t) & (cpu_reg.cl)},
-            {"%dl", (uint64_t) & (cpu_reg.dl)},
-            {"%sil", (uint64_t) & (cpu_reg.sil)},
-            {"%dil", (uint64_t) & (cpu_reg.dil)},
-            {"%bpl", (uint64_t) & (cpu_reg.bpl)},
-            {"%spl", (uint64_t) & (cpu_reg.spl)},
-        };
-        init_register_tree(register_tree, register_init_elements, sizeof(register_init_elements) / sizeof(init_t));
+        cur = str[i];
+
+        // 数括号和逗号
+        if (cur == '(' || cur == ')')
+        {
+            brackets_count++;
+        }
+        else if (cur == ',')
+        {
+            if (brackets_count == 0 || brackets_count == 2)
+            {
+                comma_count++;
+            }
+        }
+
+        // 状态变化
+        if (state == 0)
+        {
+            if (cur != ' ')
+            {
+                state = 1;
+            }
+        }
+        else if (state == 1)
+        {
+            if (cur == ' ')
+            {
+                state = 2;
+            }
+        }
+        else if (state == 2)
+        {
+            if (cur != ' ')
+            {
+                state = 3;
+            }
+        }
+        else if (state == 3)
+        {
+            // 解析 od1，以逗号为标准
+            if (comma_count == 1)
+            {
+                state = 4;
+            }
+        }
+        else if (state == 4)
+        {
+            if (cur != ',')
+            {
+                state = 5;
+            }
+        }
+        else if (state == 5)
+        {
+            if (cur == ' ')
+            {
+                state = 6;
+            }
+        }
+
+        // 计算 op od1 od2
+        if (state == 1)
+        {
+            op[op_len++] = cur;
+        }
+        else if (state == 3)
+        {
+            od1[od1_len++] = cur;
+        }
+        else if (state == 5)
+        {
+            od2[od2_len++] = cur;
+        }
     }
 
-    return register_address(register_tree, str);
+    inst->op = parse_operator(op);
+
+    if (od1_len > 0)
+    {
+        parse_operand(od1, &inst->src);
+    }
+
+    if (od2_len > 0)
+    {
+        parse_operand(od2, &inst->dst);
+    }
+
+    my_log(DEBUG_PARSEINST, "[%s (%d)] [%s (%d, %x, %x, %x, %d)] [%s (%d, %x, %x, %x, %d)]\n",
+           op, inst->op,
+           od1, inst->src.type, inst->src.imm, inst->src.reg1, inst->src.reg2, inst->src.scal,
+           od2, inst->dst.type, inst->dst.imm, inst->dst.reg1, inst->dst.reg2, inst->dst.scal);
 }
 
-static int parse_operator(const char *str)
+void TestParseInstruction()
 {
+    char assembly[15][MAX_INSTRUCTION_CHAR] = {
+        "push   %rbp",                    // 0
+        "mov    %rsp,%rbp",               // 1
+        "mov    %rdi,-0x18(%rbp)",        // 2
+        "mov    %rsi,-0x20(%rbp)",        // 3
+        "mov    -0x18(%rbp,%rax,8),%rdx", // 4
+        "mov    -0x20(%rbp),%rax",        // 5
+        "add    %rdx,%rax",               // 6
+        "mov    %rax,-0x8(%rbp)",         // 7
+        "mov    -0x8(%rbp),%rax",         // 8
+        "pop    %rbp",                    // 9
+        "retq",                           // 10
+        "mov    %rdx,%rsi",               // 11
+        "mov    %rax,%rdi",               // 12
+        "callq  0",                       // 13
+        "mov    %rax,-0x8(%rbp)",         // 14
+    };
 
-    if (operator_tree == NULL)
+    inst_t inst;
+    for (int i = 0; i < 15; ++i)
     {
-        init_t operator_init_elements[11] = {
-            {"mov", 0},
-            {"push", 1},
-            {"pop", 2},
-            {"leave", 3},
-            {"callq", 4},
-            {"retq", 5},
-            {"add", 6},
-            {"sub", 7},
-            {"cmp", 8},
-            {"jne", 9},
-            {"jmp", 10},
-        };
-
-        init_operator_tree(operator_tree, operator_init_elements, sizeof(operator_init_elements) / sizeof(init_t));
+        parse_instruction(assembly[i], &inst);
     }
-
-    return operator_type(operator_tree, str);
 }

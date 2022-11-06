@@ -36,9 +36,9 @@ void TestParseOperand();
 
 int main()
 {
-    // TestParseInstruction();
+    TestParseInstruction();
     // TestParseOperand();
-    TestRegisterTrie();
+    // TestRegisterTrie();
 
     // TestOperatorTree();
     // TestOperatorTree2();
