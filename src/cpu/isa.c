@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "headers/log.h"
 #include "headers/common.h"
 #include "headers/cpu.h"

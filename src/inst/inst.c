@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "cpu/register.h"
 #include "tools/print.h"
-#include "cpu/mmu.h"
+#include "headers/mmu.h"
 #include "memory/dram.h"
 
 /**

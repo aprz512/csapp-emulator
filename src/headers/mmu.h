@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
+/*--------------------------------------*/
 // mmu functions
+/*--------------------------------------*/
 
 // translate the virtual address to physical address in MMU
 // each MMU is owned by each core

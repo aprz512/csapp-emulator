@@ -1,7 +1,7 @@
 #include "tools/print.h"
 #include "cpu/register.h"
 #include "memory/dram.h"
-#include "cpu/mmu.h"
+#include "headers/mmu.h"
 #include <stdio.h>
 
 /**

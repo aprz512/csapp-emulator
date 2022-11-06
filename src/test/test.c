@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "headers/common.h"
+#include "headers/mytrie.h"
 
 void test_unsigned_value()
 {
@@ -32,10 +33,13 @@ void test_convert()
 
 void TestParseInstruction();
 void TestParseOperand();
+void TestRegisterTrie();
+
 
 int main()
 {
     // TestParseInstruction();
-    TestParseOperand();
+    // TestParseOperand();
+    TestRegisterTrie();
     return 0;
 }

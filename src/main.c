@@ -3,7 +3,7 @@
 #include "memory/dram.h"
 #include "inst/inst.h"
 #include "disk/elf.h"
-#include "cpu/mmu.h"
+#include "headers/mmu.h"
 #include "cpu/register.h"
 #include "tools/print.h"
 #include "headers/common.h"

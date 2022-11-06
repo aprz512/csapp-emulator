@@ -1,6 +1,8 @@
 #ifndef DEBUG_HEADER
 #define DEBUG_HEADER
 
+#include <stdint.h>
+
 #define DEBUG_INSTRUCTIONCYCLE      0x1
 #define DEBUG_REGISTERS             0x1 << 1
 #define DEBUG_PRINTSTACK            0x1 << 2
@@ -12,7 +14,7 @@
 #define DEBUG_PARSEINST             0x1 << 8
 #define DEBUG_TRIE                  0x1 << 9
 
-#define DEBUG_VERBOSE_SET           DEBUG_PARSEINST
+#define DEBUG_VERBOSE_SET           DEBUG_TRIE
 
 uint64_t my_log(uint64_t open_set, const char *format, ...);
 

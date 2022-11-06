@@ -253,4 +253,4 @@ cpu_pc_t cpu_pc;
 void instruction_cycle();
 
 
-#endif CPU_HEADER
+#endif
