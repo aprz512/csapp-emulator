@@ -1,5 +1,6 @@
 #include "headers/memory.h"
 #include "headers/common.h"
+#include "headers/log.h"
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -73,6 +74,7 @@ void readinst_dram(uint64_t paddr, char *buf)
     {
         buf[i] = pm[paddr + i];
     }
+    my_log(DEBUG_MMU, "read inst: %s\n", buf);
 }
 
 /**
@@ -87,6 +89,8 @@ void writeinst_dram(uint64_t paddr, const char *str)
     assert(len < MAX_INSTRUCTION_CHAR);
     for (size_t i = 0; i < MAX_INSTRUCTION_CHAR; i++)
     {
-        pm[paddr + 1] = i < len ? str[i] : 0;
+        pm[paddr + i] = i < len ? str[i] : 0;
     }
+
+    my_log(DEBUG_MMU, "write inst: %s, inst len = %d\n", str, len);
 }
