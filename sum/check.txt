@@ -60,8 +60,8 @@ Dump of assembler code for function main:
    0x0000555555400681 <+1>:     mov    %rsp,%rbp
    0x0000555555400684 <+4>:     mov    $0x5,%edi
    0x0000555555400689 <+9>:     callq  0x55555540064a <sum>
-=> 0x000055555540068e <+14>:    mov    %rax,%rsi
-   0x0000555555400691 <+17>:    lea    0x9c(%rip),%rdi        # 0x555555400734
+   0x000055555540068e <+14>:    mov    %rax,%rsi
+=> 0x0000555555400691 <+17>:    lea    0x9c(%rip),%rdi        # 0x555555400734
    0x0000555555400698 <+24>:    mov    $0x0,%eax
    0x000055555540069d <+29>:    callq  0x555555400520 <printf@plt>
    0x00005555554006a2 <+34>:    mov    $0x0,%eax
@@ -74,7 +74,7 @@ rax            0xf      15
 rbx            0x0      0
 rcx            0x5555554006b0   93824990840496
 rdx            0xa      10
-rsi            0x7fffffffdc78   140737488346232
+rsi            0xf      15
 rdi            0x1      1
 rbp            0x7fffffffdb90   0x7fffffffdb90
 rsp            0x7fffffffdb90   0x7fffffffdb90

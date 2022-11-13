@@ -1,7 +1,7 @@
-#include<stdarg.h>
-#include<stdio.h>
-#include<stdint.h>
-#include<headers/log.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <headers/log.h>
 
 // wrapper of stdio printf
 // controlled by the debug verbose bit set

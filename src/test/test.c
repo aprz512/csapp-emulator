@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 #include "headers/common.h"
-#include "headers/mytrie.h"
 
 void test_unsigned_value()
 {
@@ -35,9 +35,11 @@ void TestParseInstruction();
 void TestParseOperand();
 
 void AddTestEntry();
+void SumTestEntry();
 
 int main()
 {
-    AddTestEntry();
+    // AddTestEntry();
+    SumTestEntry();
     return 0;
 }

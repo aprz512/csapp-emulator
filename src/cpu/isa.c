@@ -647,6 +647,14 @@ static inline void increase_pc()
     cpu_pc.rip = cpu_pc.rip + sizeof(char) * MAX_INSTRUCTION_CHAR;
 }
 
+static inline void reset_condition_flags()
+{
+    cpu_flags.CF = 0;
+    cpu_flags.OF = 0;
+    cpu_flags.SF = 0;
+    cpu_flags.ZF = 0;
+}
+
 // instruction handlers
 static void mov_handler(od_t *src_od, od_t *dst_od)
 {
@@ -657,6 +665,8 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     if (src_od->type == REG && dst_od->type == REG)
     {
         *(uint64_t *)dst = *(uint64_t *)src;
+
+        reset_condition_flags();
         increase_pc();
     }
     // mov %rax, 0x8(%rbx)
@@ -664,6 +674,8 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     {
         uint64_t value = *(uint64_t *)src;
         write64bits_dram(va2pa(dst), value);
+
+        reset_condition_flags();
         increase_pc();
     }
     // mov 0x8(%rax), %rbx
@@ -671,6 +683,14 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     {
         uint64_t value = read64bits_dram(va2pa(src));
         *(uint64_t *)dst = value;
+
+        reset_condition_flags();
+        increase_pc();
+    }
+    else if (src_od->type == IMM && dst_od->type == REG)
+    {
+        *(uint64_t *)dst = src;
+        reset_condition_flags();
         increase_pc();
     }
     else
@@ -692,7 +712,13 @@ static void push_handler(od_t *src_od, od_t *dst_od)
         cpu_reg.rsp = cpu_reg.rsp - 8;
         uint64_t value = *(uint64_t *)src;
         write64bits_dram(va2pa(cpu_reg.rsp), value);
+
+        reset_condition_flags();
         increase_pc();
+    }
+    else
+    {
+        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -706,7 +732,13 @@ static void pop_handler(od_t *src_od, od_t *dst_od)
         uint64_t value = read64bits_dram(va2pa(cpu_reg.rsp));
         *(uint64_t *)src = value;
         cpu_reg.rsp = cpu_reg.rsp + 0x8;
+
+        reset_condition_flags();
         increase_pc();
+    }
+    else
+    {
+        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -717,6 +749,8 @@ static void ret_handler(od_t *src_od, od_t *dst_od)
     uint64_t value = read64bits_dram(va2pa(cpu_reg.rsp));
     cpu_reg.rsp = cpu_reg.rsp + 0x8;
     cpu_pc.rip = value;
+
+    reset_condition_flags();
 }
 
 static void add_handler(od_t *src_od, od_t *dst_od)
@@ -728,7 +762,26 @@ static void add_handler(od_t *src_od, od_t *dst_od)
     if (src_od->type == REG && dst_od->type == REG)
     {
         *(uint64_t *)dst = *(uint64_t *)src + *(uint64_t *)dst;
+
+        uint64_t val = *(uint64_t *)dst + *(uint64_t *)src;
+
+        int val_sign = ((val >> 63) & 0x1);
+        int src_sign = ((*(uint64_t *)src >> 63) & 0x1);
+        int dst_sign = ((*(uint64_t *)dst >> 63) & 0x1);
+
+        // 无符号溢出
+        cpu_flags.CF = val < *(uint64_t *)src;
+        cpu_flags.ZF = val == 0;
+        cpu_flags.SF = val_sign == 1;
+        // 有符号溢出条件：src dst 符号一样，与 val 符号不一样
+        cpu_flags.OF = (src_sign == 0 && dst_sign == 0 && val_sign == 1) || (src_sign == 1 && dst_sign == 1 && val_sign == 0);
+        // cpu_flags.OF = !(dst_sign ^ src_sign) && (src_sign ^ val_sign);
+
         increase_pc();
+    }
+    else
+    {
+        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -750,13 +803,109 @@ static void call_handler(od_t *src_od, od_t *dst_od)
         value);
     // jump to target function address
     cpu_pc.rip = src;
+
+    reset_condition_flags();
 }
 
-static void leave_handler(od_t *src_od, od_t *dst_od) {}
-static void sub_handler(od_t *src_od, od_t *dst_od) {}
-static void cmp_handler(od_t *src_od, od_t *dst_od) {}
-static void jne_handler(od_t *src_od, od_t *dst_od) {}
-static void jmp_handler(od_t *src_od, od_t *dst_od) {}
+static void leave_handler(od_t *src_od, od_t *dst_od)
+{
+    /*
+    Leave等价于（还原栈帧）：
+        movl %ebp %esp
+        popl %ebp
+    */
+
+    cpu_reg.rsp = cpu_reg.rbp;
+    uint64_t old_value = read64bits_dram(va2pa(cpu_reg.rsp));
+    cpu_reg.rsp += 8;
+    cpu_reg.rbp = old_value;
+
+    reset_condition_flags();
+    increase_pc();
+}
+
+static void sub_handler(od_t *src_od, od_t *dst_od)
+{
+    uint64_t src = compute_operand(src_od);
+    uint64_t dst = compute_operand(dst_od);
+    if (src_od->type == IMM && dst_od->type == REG)
+    {
+        // 这里不能直接用减法，如果 src 实际上是一个负数，那么就会有问题???
+        *(uint64_t *)dst = *(uint64_t *)dst + (~src + 1);
+        // *(uint64_t *)dst = *(uint64_t *)dst - src;
+
+        uint64_t val = *(uint64_t *)dst + (~src + 1);
+        int val_sign = ((val >> 63) & 0x1);
+        int src_sign = ((src >> 63) & 0x1);
+        int dst_sign = ((*(uint64_t *)dst >> 63) & 0x1);
+
+        // set condition flags
+        cpu_flags.CF = val > *(uint64_t *)dst;
+        cpu_flags.ZF = val == 0;
+        cpu_flags.SF = val_sign == 1;
+        cpu_flags.OF = (src_sign == 1 && dst_sign == 0 && val_sign == 1) || (src_sign == 0 && dst_sign == 1 && val_sign == 0);
+
+        increase_pc();
+    }
+    else
+    {
+        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+    }
+}
+
+static void cmp_handler(od_t *src_od, od_t *dst_od)
+{
+    uint64_t src = compute_operand(src_od);
+    uint64_t dst = compute_operand(dst_od);
+    if (src_od->type == IMM && dst_od->type == MEM_IMM_REG1)
+    {
+        // cmpq   $0x1,-0x8(%rbp)
+        // 实际上的比较顺序是 -0x8(%rbp) ：$0x1
+        // cmp 指令根据两个操作数之差来设置条件码。除了只设置条件码而不更新目的寄存器，cmp 与 sub 行为一样
+        uint64_t dst_val = read64bits_dram(va2pa(dst));
+        uint64_t val = dst_val + (~src + 1);
+
+        int val_sign = ((val >> 63) & 0x1);
+        int src_sign = ((src >> 63) & 0x1);
+        int dst_sign = ((dst_val >> 63) & 0x1);
+
+        // set condition flags
+        cpu_flags.CF = (val > dst_val); // unsigned
+        cpu_flags.ZF = (val == 0);
+        cpu_flags.SF = val_sign;
+        cpu_flags.OF = (src_sign == 1 && dst_sign == 0 && val_sign == 1) || (src_sign == 0 && dst_sign == 1 && val_sign == 0);
+
+        increase_pc();
+    }
+    else
+    {
+        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+    }
+}
+
+static void jne_handler(od_t *src_od, od_t *dst_od)
+{
+    uint64_t src = compute_operand(src_od);
+
+    if (cpu_flags.ZF == 0)
+    {
+        // jmp to src address
+        cpu_pc.rip = src;
+    }
+    else
+    {
+        // fetch next inst
+        increase_pc();
+    }
+    reset_condition_flags();
+}
+
+static void jmp_handler(od_t *src_od, od_t *dst_od)
+{
+    uint64_t src = compute_operand(src_od);
+    cpu_pc.rip = src;
+    reset_condition_flags();
+}
 
 // instruction cycle is implemented in CPU
 // the only exposed interface outside CPU

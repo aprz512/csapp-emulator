@@ -99,4 +99,6 @@ void AddTestEntry()
 
     check_register();
     check_memory();
+
+    printf("add done!!!\n");
 }
