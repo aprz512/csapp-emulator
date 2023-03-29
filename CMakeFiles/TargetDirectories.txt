@@ -1,4 +1,0 @@
-/home/aprz512/workspace/csapp/csapp-emulator/CMakeFiles/rebuild_cache.dir
-/home/aprz512/workspace/csapp/csapp-emulator/CMakeFiles/edit_cache.dir
-/home/aprz512/workspace/csapp/csapp-emulator/CMakeFiles/emulater.dir
-/home/aprz512/workspace/csapp/csapp-emulator/CMakeFiles/linker.dir

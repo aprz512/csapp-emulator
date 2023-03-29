@@ -1,1 +1,0 @@
-/usr/bin/cc    CMakeFiles/linker.dir/src/linker/elf.c.o CMakeFiles/linker.dir/src/linker/linker.c.o  -o linker 
