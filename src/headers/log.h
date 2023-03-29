@@ -16,7 +16,7 @@
 #define DEBUG_TRIE                  0x1L << 9
 
 // 第一要打上括号，宏替换会出问题
-#define DEBUG_VERBOSE_SET           (DEBUG_PRINTSTACK|DEBUG_REGISTERS)
+#define DEBUG_VERBOSE_SET           (DEBUG_LINKER)
 
 uint64_t my_log(uint64_t open_set, const char *format, ...);
 

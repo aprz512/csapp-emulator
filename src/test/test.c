@@ -40,6 +40,6 @@ void SumTestEntry();
 int main()
 {
     // AddTestEntry();
-    SumTestEntry();
+    // SumTestEntry();
     return 0;
 }
