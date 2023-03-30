@@ -7,8 +7,6 @@
 #include "headers/linker.h"
 #include "headers/log.h"
 
-void parse_elf(char *filename, elf_t *elf);
-void free_elf(elf_t *elf);
 
 int main()
 {

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #define MAX_CHAR_SECTION_NAME (32)
+#define MAX_CHAR_SYMBOl_NAME (32)
 
 typedef struct
 {
@@ -30,6 +31,17 @@ typedef enum
     STT_FUNC
 } st_type_t;
 
+typedef struct
+{
+    char st_name[MAX_CHAR_SYMBOl_NAME];
+    st_bind_t bind;
+    st_type_t type;
+    char st_shndx[MAX_CHAR_SECTION_NAME];
+    uint64_t st_value;      // 符号表在 section 内的偏移
+    uint64_t st_size;       // 改符号占据几行，函数占据很多行，变量一般占据1行
+} st_entry_t;
+
+
 // 因为是处理 txt 文件，所以需要将全部字符串内容读到内存里面
 // 为了简单，限制一下 txt 文件里面的信息大小
 #define MAX_ELF_FILE_LENGTH (64) // txt 有效信息最大长度（不包括括号之类的）
@@ -38,11 +50,14 @@ typedef enum
 typedef struct
 {
     char buffer[MAX_ELF_FILE_LENGTH][MAX_ELF_FILE_WIDTH];
-    // 有效行
-    uint64_t line_count;
-    // section header 行
-    uint64_t sht_count;
-    sh_entry_t *sht;
+    uint64_t line_count;    // 有效行
+    uint64_t sht_count;     // section header 数量
+    sh_entry_t *sht;        // section header 内容
+    uint64_t symt_count;    // 符号表数量
+    st_entry_t *symt;       // 符号表内容
 } elf_t;
+
+void parse_elf(char *filename, elf_t *elf);
+void free_elf(elf_t *elf);
 
 #endif
