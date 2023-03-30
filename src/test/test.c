@@ -37,9 +37,9 @@ void TestParseOperand();
 void AddTestEntry();
 void SumTestEntry();
 
-int main()
-{
-    // AddTestEntry();
-    // SumTestEntry();
-    return 0;
-}
+// int main()
+// {
+//     // AddTestEntry();
+//     // SumTestEntry();
+//     return 0;
+// }

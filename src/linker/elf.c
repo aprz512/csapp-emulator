@@ -7,7 +7,7 @@
 #include "headers/linker.h"
 #include "headers/log.h"
 
-int read_elf(const char *filename, char *bufaddr)
+int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH])
 {
     // open file and read
     FILE *fp;
@@ -47,9 +47,6 @@ int read_elf(const char *filename, char *bufaddr)
         // 剩下的是有效行，需要限制行数
         if (line_counter < MAX_ELF_FILE_LENGTH)
         {
-            // bufaddr 是一个指针
-            char *linebuf = bufaddr + line_counter * MAX_ELF_FILE_WIDTH * sizeof(char);
-
             int i = 0;
             // 限制 txt 文件一行的宽度
             while (i < len && i < MAX_ELF_FILE_WIDTH)
@@ -61,10 +58,11 @@ int read_elf(const char *filename, char *bufaddr)
                 {
                     break;
                 }
-                linebuf[i] = line[i];
+
+                elf_buf[line_counter][i] = line[i];
                 i++;
             }
-            linebuf[i] = '\0';
+            elf_buf[line_counter][i] = '\0';
             line_counter++;
         }
         else
@@ -76,6 +74,6 @@ int read_elf(const char *filename, char *bufaddr)
     }
 
     fclose(fp);
-    assert(string2uint((char *)bufaddr) == line_counter);
+    assert(string2uint((char *)elf_buf) == line_counter);
     return line_counter;
 }
