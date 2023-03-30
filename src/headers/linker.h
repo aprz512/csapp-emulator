@@ -57,7 +57,19 @@ typedef struct
     st_entry_t *symt;       // 符号表内容
 } elf_t;
 
+#define MAX_SYMBOL_MAP_LENGTH (64)
+#define MAX_SECTION_BUFFER_LENGTH (64)
+
+// 用来储存两个源文件的链接映射关系
+typedef struct
+{
+    elf_t *elf;      // src elf file
+    st_entry_t *src; // src symbol
+    st_entry_t *dst; // 用作重定位
+} smap_t;
+
 void parse_elf(char *filename, elf_t *elf);
 void free_elf(elf_t *elf);
+void link_elf(elf_t **srcs, int num_srcs, elf_t *dst);
 
 #endif
