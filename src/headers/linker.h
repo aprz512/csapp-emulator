@@ -38,8 +38,10 @@ typedef enum
 typedef struct
 {
     char buffer[MAX_ELF_FILE_LENGTH][MAX_ELF_FILE_WIDTH];
+    // 有效行
     uint64_t line_count;
-
+    // section header 行
+    uint64_t sht_count;
     sh_entry_t *sht;
 } elf_t;
 

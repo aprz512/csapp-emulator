@@ -7,23 +7,19 @@
 #include "headers/linker.h"
 #include "headers/log.h"
 
-int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH]);
+void parse_elf(char *filename, elf_t *elf);
+void free_elf(elf_t *elf);
 
 int main()
 {
 
-    char elf[MAX_ELF_FILE_LENGTH][MAX_ELF_FILE_WIDTH];
+    elf_t elf;
 
-    printf("%c \n", elf[3][2]);
+    parse_elf("../linker/sum.elf.txt", &elf);
 
-    int count = read_elf("../linker/sum.elf.txt", elf);
-    for (int i = 0; i < count; ++i)
-    {
-        printf("%s\n", elf[i]);
-    }
 
-    // char *buffer = getcwd(NULL, 0);
-    // printf("%s\n",buffer);
+
+    free_elf(&elf);
 
     return 0;
 }
