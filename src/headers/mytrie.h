@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include <headers/log.h>
+#include <headers/common.h>
 #include <headers/cpu.h>
 #include <assert.h>
 

@@ -22,5 +22,8 @@ aux_source_directory(src/linker linker_source_files)
 # 搜索目录下的所有.cpp文件
 aux_source_directory(src/common common_source_files)
 
+# 搜索目录下的所有.cpp文件
+aux_source_directory(src/algorithm algorithm_source_files)
+
 # 构建 linker
-add_executable(linker ${linker_source_files} ${common_source_files})
+add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})

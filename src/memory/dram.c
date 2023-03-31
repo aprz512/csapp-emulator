@@ -1,6 +1,5 @@
 #include "headers/memory.h"
 #include "headers/common.h"
-#include "headers/log.h"
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>

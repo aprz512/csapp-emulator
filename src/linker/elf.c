@@ -1,3 +1,13 @@
+/* BCST - Introduction to Computer Systems
+ * Author:      yangminz@outlook.com
+ * Github:      https://github.com/yangminz/bcst_csapp
+ * Bilibili:    https://space.bilibili.com/4564101
+ * Zhihu:       https://www.zhihu.com/people/zhao-yang-min
+ * This project (code repository and videos) is exclusively owned by yangminz 
+ * and shall not be used for commercial and profitting purpose 
+ * without yangminz's permission.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -5,35 +15,177 @@
 #include <assert.h>
 #include "headers/common.h"
 #include "headers/linker.h"
-#include "headers/log.h"
 
-void free_elf(elf_t *elf);
-void parse_elf(char *filename, elf_t *elf);
-static int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH]);
-static int parse_table_entry(char *str, char ***ent);
-static void print_elf(elf_t *elf);
-static void print_section_header_entry(sh_entry_t *sh);
-static void parse_section_header(char *str, sh_entry_t *sh);
-static void free_table_entry(char **ent, int n);
-static void parse_symtab(char *str, st_entry_t *ste);
-static void print_symtab_entry(st_entry_t *ste);
+static int parse_table_entry(char *str, char ***ent)
+{
+    // column0,column1,column2,column3,...
+    // parse line as table entries
+    int count_col = 1;
+    int len = strlen(str);
 
+    // count columns
+    for (int i = 0; i < len; ++ i)
+    {
+        if (str[i] == ',')
+        {
+            count_col ++;
+        }
+    }
 
+    // malloc and create list
+    char **arr = tag_malloc(
+        count_col * sizeof(char *), 
+        "parse_table_entry");
+    *ent = arr;
 
-/**
- * @brief 将 elf txt 文件读入 buf 中
- *
- * @param filename rootProject/linker/sum.elf.txt
- * @return elf 文件的有效长度
- */
-static int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH])
+    int col_index = 0;
+    int col_width = 0;
+    char col_buf[32];
+    for (int i = 0; i < len + 1; ++ i)
+    {
+        if (str[i] == ',' || str[i] == '\0')
+        {
+            assert(col_index < count_col);
+
+            // malloc and copy
+            char *col = tag_malloc(
+                (col_width + 1) * sizeof(char),
+                "parse_table_entry");
+            for (int j = 0; j < col_width; ++ j)
+            {
+                col[j] = col_buf[j];
+            }
+            col[col_width] = '\0';
+
+            // update
+            arr[col_index] = col;
+            col_index ++;
+            col_width = 0;
+        }
+        else
+        {
+            assert(col_width < 32);
+            col_buf[col_width] = str[i];
+            col_width ++;
+        }
+    }
+    return count_col;
+}
+
+static void parse_sh(char *str, sh_entry_t *sh)
+{
+    // .text,0x0,4,22
+    char **cols;
+    int num_cols = parse_table_entry(str, &cols);
+    assert(num_cols == 4);
+
+    assert(sh != NULL);
+    strcpy(sh->sh_name, cols[0]);
+    sh->sh_addr = string2uint(cols[1]);
+    sh->sh_offset = string2uint(cols[2]);
+    sh->sh_size = string2uint(cols[3]);
+}
+
+static void print_sh_entry(sh_entry_t *sh)
+{
+    debug_printf(DEBUG_LINKER, "%s\t%x\t%d\t%d\n",
+        sh->sh_name,
+        sh->sh_addr,
+        sh->sh_offset,
+        sh->sh_size);
+}
+
+static void parse_symtab(char *str, st_entry_t *ste)
+{
+    // sum,STB_GLOBAL,STT_FUNCTION,.text,0,22
+    char **cols;
+    int num_cols = parse_table_entry(str, &cols);
+    assert(num_cols == 6);
+
+    assert(ste != NULL);
+    strcpy(ste->st_name, cols[0]);
+
+    // select symbol bind
+    uint64_t bind_value;
+    if (hashtable_get(link_constant_dict, cols[1], &bind_value) == 0)
+    {
+        // failed
+        printf("symbol bind is neiter LOCAL, GLOBAL, nor WEAK\n");
+        exit(0);
+    }
+    ste->bind = (st_bind_t)bind_value;
+
+    uint64_t type_value;
+    if (hashtable_get(link_constant_dict, cols[2], &type_value) == 0)
+    {
+        // failed
+        printf("symbol type is neiter NOTYPE, OBJECT, nor FUNC\n");
+        exit(0);
+    }
+    ste->type = (st_type_t)type_value;
+
+    strcpy(ste->st_shndx, cols[3]);
+
+    ste->st_value = string2uint(cols[4]);
+    ste->st_size = string2uint(cols[5]);
+}
+
+static void print_symtab_entry(st_entry_t *ste)
+{
+    debug_printf(DEBUG_LINKER, "%s\t%d\t%d\t%s\t%d\t%d\n",
+        ste->st_name,
+        ste->bind,
+        ste->type,
+        ste->st_shndx,
+        ste->st_value,
+        ste->st_size);
+}
+
+static void parse_relocation(char *str, rl_entry_t *rte)
+{
+    // 4,7,R_X86_64_PC32,0,-4
+    char **cols;
+    int num_cols = parse_table_entry(str, &cols);
+    assert(num_cols == 5);
+
+    assert(rte != NULL);
+    rte->r_row = string2uint(cols[0]);
+    rte->r_col = string2uint(cols[1]);
+
+    // select relocation type
+    uint64_t type_value;
+    if (hashtable_get(link_constant_dict, cols[2], &type_value) == 0)
+    {
+        // failed
+        printf("relocation type is neiter R_X86_64_32, R_X86_64_PC32, nor R_X86_64_PLT32\n");
+        exit(0);
+    }
+    rte->type = (st_type_t)type_value;
+
+    rte->sym = string2uint(cols[3]);
+
+    uint64_t bitmap = string2uint(cols[4]);
+    rte->r_addend = *(int64_t *)&bitmap;
+}
+
+static void print_relocation_entry(rl_entry_t *rte)
+{
+    debug_printf(DEBUG_LINKER, "%d\t%d\t%d\t%d\t%d\n",
+        rte->r_row,
+        rte->r_col,
+        rte->type,
+        rte->sym,
+        rte->r_addend);
+}
+
+static int read_elf(const char *filename, uint64_t bufaddr)
 {
     // open file and read
     FILE *fp;
     fp = fopen(filename, "r");
     if (fp == NULL)
     {
-        my_log(DEBUG_LINKER, "unable to open file %s\n", filename);
+        debug_printf(DEBUG_LINKER, "unable to open file %s\n", filename);
         exit(1);
     }
 
@@ -44,17 +196,16 @@ static int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH])
     while (fgets(line, MAX_ELF_FILE_WIDTH, fp) != NULL)
     {
         int len = strlen(line);
-        // 去换行与注释行
-        if ((len == 0) ||
+        if ((len == 0) || 
             (len >= 1 && (line[0] == '\n' || line[0] == '\r')) ||
             (len >= 2 && (line[0] == '/' && line[1] == '/')))
         {
             continue;
         }
 
-        // 去除空白行
+        // check if is empty or white line
         int iswhite = 1;
-        for (int i = 0; i < len; ++i)
+        for (int i = 0; i < len; ++ i)
         {
             iswhite = iswhite && (line[i] == ' ' || line[i] == '\t' || line[i] == '\r');
         }
@@ -63,74 +214,115 @@ static int read_elf(const char *filename, char (*elf_buf)[MAX_ELF_FILE_WIDTH])
             continue;
         }
 
-        // 剩下的是有效行，需要限制行数
+        // to this line, this line is not white and contains information
+
         if (line_counter < MAX_ELF_FILE_LENGTH)
         {
+            // store this line to buffer[line_counter]
+            uint64_t addr = bufaddr + line_counter * MAX_ELF_FILE_WIDTH * sizeof(char);
+            char *linebuf = (char *)addr;
+
             int i = 0;
-            // 限制 txt 文件一行的宽度
             while (i < len && i < MAX_ELF_FILE_WIDTH)
             {
-                // 过滤掉换行符与行内注释内容
-                if ((line[i] == '\n') ||
-                    (line[i] == '\r') ||
+                if ((line[i] == '\n') || 
+                    (line[i] == '\r') || 
                     ((i + 1 < len) && (i + 1 < MAX_ELF_FILE_WIDTH) && line[i] == '/' && line[i + 1] == '/'))
                 {
                     break;
                 }
-
-                elf_buf[line_counter][i] = line[i];
-                i++;
+                linebuf[i] = line[i];
+                i ++;
             }
-            elf_buf[line_counter][i] = '\0';
-            line_counter++;
+            linebuf[i] = '\0';
+            line_counter ++;
         }
         else
         {
-            my_log(DEBUG_LINKER, "elf file %s is too long (>%d)\n", filename, MAX_ELF_FILE_LENGTH);
+            debug_printf(DEBUG_LINKER, "elf file %s is too long (>%d)\n", filename, MAX_ELF_FILE_LENGTH);
             fclose(fp);
             exit(1);
         }
     }
 
     fclose(fp);
-    assert(string2uint((char *)elf_buf) == line_counter);
+    assert(string2uint((char *)bufaddr) == line_counter);
     return line_counter;
 }
 
-/**
- * @brief 解析 elf 文件
- */
+static void init_dictionary()
+{
+    if (link_constant_dict != NULL)
+    {
+        return;
+    }
+
+    link_constant_dict = hashtable_construct(4);
+
+    hashtable_insert(&link_constant_dict, "STB_LOCAL", STB_LOCAL);
+    hashtable_insert(&link_constant_dict, "STB_GLOBAL", STB_GLOBAL);
+    hashtable_insert(&link_constant_dict, "STB_WEAK", STB_WEAK);
+
+    hashtable_insert(&link_constant_dict, "STT_NOTYPE", STT_NOTYPE);
+    hashtable_insert(&link_constant_dict, "STT_OBJECT", STT_OBJECT);
+    hashtable_insert(&link_constant_dict, "STT_FUNC", STT_FUNC);
+
+    hashtable_insert(&link_constant_dict, "R_X86_64_32", R_X86_64_32);
+    hashtable_insert(&link_constant_dict, "R_X86_64_PC32", R_X86_64_PC32);
+    hashtable_insert(&link_constant_dict, "R_X86_64_PLT32", R_X86_64_PLT32);
+
+    print_hashtable(link_constant_dict);
+}
+
 void parse_elf(char *filename, elf_t *elf)
 {
     assert(elf != NULL);
+    int line_count = read_elf(filename, (uint64_t)(&(elf->buffer)));
+    for (int i = 0; i < line_count; ++ i)
+    {
+        printf("[%d]\t%s\n", i, elf->buffer[i]);
+    }
 
-    int line_count = read_elf(filename, elf->buffer);
-    elf->line_count = line_count;
-    elf->sht_count = string2uint(elf->buffer[1]);
-    print_elf(elf);
+    init_dictionary();
 
     // parse section headers
-    int sh_count = elf->sht_count;
-    elf->sht = malloc(sh_count * sizeof(sh_entry_t));
+    elf->sht_count = string2uint(elf->buffer[1]);;
+    elf->sht = tag_malloc(
+        elf->sht_count * sizeof(sh_entry_t), 
+        "parse_elf");
 
     sh_entry_t *symt_sh = NULL;
-    for (int i = 0; i < sh_count; ++i)
+    sh_entry_t *rtext_sh = NULL;
+    sh_entry_t *rdata_sh = NULL;
+    for (int i = 0; i < elf->sht_count; ++ i)
     {
-        parse_section_header(elf->buffer[2 + i], &(elf->sht[i]));
-        print_section_header_entry(&(elf->sht[i]));
+        parse_sh(elf->buffer[2 + i], &(elf->sht[i]));
+        print_sh_entry(&(elf->sht[i]));
 
         if (strcmp(elf->sht[i].sh_name, ".symtab") == 0)
         {
             // this is the section header for symbol table
             symt_sh = &(elf->sht[i]);
         }
+        else if (strcmp(elf->sht[i].sh_name, ".rel.text") == 0)
+        {
+            // this is the section header for .rel.text
+            rtext_sh = &(elf->sht[i]);
+        }
+        else if (strcmp(elf->sht[i].sh_name, ".rel.data") == 0)
+        {
+            // this is the section header for .rel.dat
+            rdata_sh = &(elf->sht[i]);
+        }
     }
 
     assert(symt_sh != NULL);
 
-    // 解析符号表
+    // parse symbol table
     elf->symt_count = symt_sh->sh_size;
-    elf->symt = malloc(elf->symt_count * sizeof(st_entry_t));
+    elf->symt = tag_malloc(
+        elf->symt_count * sizeof(st_entry_t),
+        "parse_elf");
     for (int i = 0; i < symt_sh->sh_size; ++ i)
     {
         parse_symtab(
@@ -138,170 +330,89 @@ void parse_elf(char *filename, elf_t *elf)
             &(elf->symt[i]));
         print_symtab_entry(&(elf->symt[i]));
     }
-}
 
-static void print_elf(elf_t *elf)
-{
-    for (int i = 0; i < elf->line_count; ++i)
+    // parse relocation table
+    if (rtext_sh != NULL)
     {
-        my_log(DEBUG_LINKER, "[elf]-[%d]\t%s\n", i, elf->buffer[i]);
+        elf->reltext_count = rtext_sh->sh_size;
+        elf->reltext = tag_malloc(
+            elf->reltext_count * sizeof(rl_entry_t),
+            "parse_elf");
+        for (int i = 0; i < rtext_sh->sh_size; ++ i)
+        {
+            parse_relocation(
+                elf->buffer[i + rtext_sh->sh_offset],
+                &(elf->reltext[i])
+            );
+            int st = elf->reltext[i].sym;
+            assert(0 <= st && st < elf->symt_count);
+
+            print_relocation_entry(&(elf->reltext[i]));
+        }
     }
+    else
+    {
+        elf->reltext_count = 0;
+        elf->reltext = NULL;
+    }
+
+    // .rel.data
+    if (rdata_sh != NULL)
+    {
+        elf->reldata_count = rdata_sh->sh_size;
+        elf->reldata = tag_malloc(
+            elf->reldata_count * sizeof(rl_entry_t),
+            "parse_elf");
+        for (int i = 0; i < rdata_sh->sh_size; ++ i)
+        {
+            parse_relocation(
+                elf->buffer[i + rdata_sh->sh_offset],
+                &(elf->reldata[i])
+            );
+            int st = elf->reldata[i].sym;
+            assert(0 <= st && st < elf->symt_count);
+
+            print_relocation_entry(&(elf->reldata[i]));
+        }
+    }
+    else
+    {
+        elf->reldata_count = 0;
+        elf->reldata = NULL;
+    }
+
+    tag_sweep("parse_table_entry");
 }
 
-static void print_section_header_entry(sh_entry_t *sh)
+void write_eof(const char *filename, elf_t *eof)
 {
-    my_log(DEBUG_LINKER, "[section-header-entry]\t%s\t%x\t%d\t%d\n",
-           sh->sh_name,
-           sh->sh_addr,
-           sh->sh_offset,
-           sh->sh_size);
+    // open elf file
+    FILE *fp;
+    fp = fopen(filename, "w");
+    if (fp == NULL)
+    {
+        debug_printf(DEBUG_LINKER, "unable to open file %s\n", filename);
+        exit(1);
+    }
+
+    for (int i = 0; i < eof->line_count; ++ i)
+    {
+        fprintf(fp, "%s\n", eof->buffer[i]);
+    }
+
+    fclose(fp);
+
+    // free hash table
+    hashtable_free(link_constant_dict);
 }
 
 void free_elf(elf_t *elf)
 {
     assert(elf != NULL);
-
-    free(elf->sht);
-}
-
-static void parse_section_header(char *str, sh_entry_t *sh)
-{
-    char **cols;
-    int num_cols = parse_table_entry(str, &cols);
-    assert(num_cols == 4);
-
-    strcpy(sh->sh_name, cols[0]);
-    sh->sh_addr = string2uint(cols[1]);
-    sh->sh_offset = string2uint(cols[2]);
-    sh->sh_size = string2uint(cols[3]);
-
-    free_table_entry(cols, num_cols);
-}
-
-static void free_table_entry(char **ent, int n)
-{
-    for (int i = 0; i < n; ++i)
-    {
-        free(ent[i]);
-    }
-    free(ent);
-}
-
-static int parse_table_entry(char *str, char ***ent)
-{
-    // parse line as table entries
-    int count_col = 1;
-    int len = strlen(str);
-
-    // count columns
-    for (int i = 0; i < len; ++i)
-    {
-        if (str[i] == ',')
-        {
-            count_col++;
-        }
-    }
-
-    // malloc and create list
-    char **arr = malloc(count_col * sizeof(char *));
-    *ent = arr;
-
-    int col_index = 0;
-    int col_width = 0;
-    char col_buf[32];
-    for (int i = 0; i < len + 1; ++i)
-    {
-        if (str[i] == ',' || str[i] == '\0')
-        {
-            assert(col_index < count_col);
-
-            // malloc and copy
-            char *col = malloc((col_width + 1) * sizeof(char));
-            for (int j = 0; j < col_width; ++j)
-            {
-                col[j] = col_buf[j];
-            }
-            col[col_width] = '\0';
-
-            // update
-            arr[col_index] = col;
-            col_index++;
-            col_width = 0;
-        }
-        else
-        {
-            assert(col_width < 32);
-            col_buf[col_width] = str[i];
-            col_width++;
-        }
-    }
-
-    return count_col;
-}
-
-static void parse_symtab(char *str, st_entry_t *ste)
-{
-    // sum,STB_GLOBAL,STT_FUNC,.text,0,22
-    char **cols;
-    int num_cols = parse_table_entry(str, &cols);
-    assert(num_cols == 6);
-
-    assert(ste != NULL);
-    strcpy(ste->st_name, cols[0]);
-
-    // select symbol bind
-    if (strcmp(cols[1], "STB_LOCAL") == 0)
-    {
-        ste->bind = STB_LOCAL;
-    }
-    else if (strcmp(cols[1], "STB_GLOBAL") == 0)
-    {
-        ste->bind = STB_GLOBAL;
-    }
-    else if (strcmp(cols[1], "STB_WEAK") == 0)
-    {
-        ste->bind = STB_WEAK;
-    }
-    else
-    {
-        printf("symbol bind is neiter LOCAL, GLOBAL, nor WEAK\n");
-        exit(0);
-    }
     
-    // select symbol type 
-    if (strcmp(cols[2], "STT_NOTYPE") == 0)
-    {
-        ste->type = STT_NOTYPE;
-    }
-    else if (strcmp(cols[2], "STT_OBJECT") == 0)
-    {
-        ste->type = STT_OBJECT;
-    }
-    else if (strcmp(cols[2], "STT_FUNC") == 0)
-    {
-        ste->type = STT_FUNC;
-    }
-    else
-    {
-        printf("symbol type is neiter NOTYPE, OBJECT, nor FUNC\n");
-        exit(0);
-    }
-
-    strcpy(ste->st_shndx, cols[3]);
-
-    ste->st_value = string2uint(cols[4]);
-    ste->st_size = string2uint(cols[5]);
-
-    free_table_entry(cols, num_cols);
-}
-
-static void print_symtab_entry(st_entry_t *ste)
-{
-    my_log(DEBUG_LINKER, "[symbol-table]\t%s\t%d\t%d\t%s\t%d\t%d\n",
-        ste->st_name,
-        ste->bind,
-        ste->type,
-        ste->st_shndx,
-        ste->st_value,
-        ste->st_size);
+    tag_free(elf->sht);
+    tag_free(elf->symt);
+    tag_free(elf->reltext);
+    tag_free(elf->reldata);
+    tag_free(elf);
 }

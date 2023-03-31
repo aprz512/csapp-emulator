@@ -5,26 +5,41 @@
 #include <unistd.h>
 #include "headers/common.h"
 #include "headers/linker.h"
-#include "headers/log.h"
-
+#include "headers/common.h"
 
 int main()
 {
+    int elf_num = 2;
+    char elf_fn[2][64] = {
+        "main",
+        "sum"};
+    elf_t **srcs = tag_malloc(elf_num * sizeof(elf_t *), "link");
+    for (int i = 0; i < elf_num; ++i)
+    {
+        char elf_fullpath[100];
+        sprintf(elf_fullpath, "%s/%s.elf.txt", "../linker", elf_fn[i]);
+        printf("%s\n", elf_fullpath);
 
-    elf_t src[2];
-    parse_elf("../linker/sum.elf.txt", &src[0]);
-    
-    elf_t src2;
-    parse_elf("../linker/main.elf.txt", &src[1]);
+        srcs[i] = tag_malloc(sizeof(elf_t), "link");
+        parse_elf(elf_fullpath, srcs[i]);
+    }
 
-    elf_t dst;
-    elf_t *srcp[2];
-    srcp[0] = &src[0];
-    srcp[1] = &src[1];
-    link_elf((elf_t **)&srcp, 2, &dst);
+    elf_t linked;
+    link_elf(srcs, elf_num, &linked);
 
-    free_elf(&src[0]);
-    free_elf(&src[1]);
+    char eof_fullpath[100];
+    sprintf(eof_fullpath, "%s/%s.eof.txt", "../linker", "output");
+    printf("into %s\n", eof_fullpath);
+
+    write_eof(eof_fullpath, &linked);
+
+    // releaes elf heap
+    for (int i = 0; i < elf_num; ++i)
+    {
+        free_elf(srcs[i]);
+    }
+
+    tag_free(srcs);
 
     return 0;
 }
