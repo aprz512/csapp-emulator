@@ -14,7 +14,6 @@
 #include <string.h>
 #include "headers/linker.h"
 #include "headers/common.h"
-#include "headers/common.h"
 #include "headers/instruction.h"
 
 #define MAX_SYMBOL_MAP_LENGTH 64
@@ -666,8 +665,6 @@ static void relocation_processing(elf_t **srcs, int num_srcs, elf_t *dst,
                                         // update the location
                                         st_entry_t *eof_referenced = smap_table[u].dst;
 
-                                        debug_printf(DEBUG_LINKER, "%s - %d - %s - %d\n", eof_referencing->st_name, eof_referencing->st_value, sym->st_name, sym->st_value);
-
                                         (handler_table[(int)r->type])(
                                             dst, eof_text_sh,
                                             r->r_row - sym->st_value + eof_referencing->st_value, 
@@ -729,8 +726,6 @@ static void relocation_processing(elf_t **srcs, int num_srcs, elf_t *dst,
                                         // till now, the referencing row and referenced row are all found
                                         // update the location
                                         st_entry_t *eof_referenced = smap_table[u].dst;
-
-                                        debug_printf(DEBUG_LINKER, "%s - %s\n", eof_referenced->st_name, sym->st_name);
 
                                         (handler_table[(int)r->type])(
                                             dst, eof_data_sh,
