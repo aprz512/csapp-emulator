@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include "headers/address.h"
+
+uint8_t sram_cache_read(uint64_t paddr);
+void sram_cache_write(uint64_t paddr, uint8_t data);
 
 /**
  * @brief 读取物理地址上的值，也就是 physical_memory 的
@@ -13,12 +17,24 @@
  * @return uint64_t
  */
 // memory accessing used in instructions
-uint64_t read64bits_dram(uint64_t paddr)
+uint64_t cpu_read64bits_dram(uint64_t paddr)
 {
     if (DEBUG_ENABLE_SRAM_CACHE == 1)
     {
-        // try to load uint64_t from SRAM cache
+        // read from SRAM
         // little-endian
+        uint64_t val = 0x0;
+
+        val += sram_cache_read(paddr + 0) << 0;
+        val += sram_cache_read(paddr + 1) << 8;
+        val += sram_cache_read(paddr + 2) << 16;
+        val += sram_cache_read(paddr + 3) << 24;
+        val += sram_cache_read(paddr + 4) << 32;
+        val += sram_cache_read(paddr + 5) << 40;
+        val += sram_cache_read(paddr + 6) << 48;
+        val += sram_cache_read(paddr + 7) << 56;
+
+        return val;
     }
     else
     {
@@ -39,12 +55,15 @@ uint64_t read64bits_dram(uint64_t paddr)
     }
 }
 
-void write64bits_dram(uint64_t paddr, uint64_t data)
+void cpu_write64bits_dram(uint64_t paddr, uint64_t data)
 {
     if (DEBUG_ENABLE_SRAM_CACHE == 1)
     {
-        // try to write uint64_t to SRAM cache
-        // little-endian
+        for (int i = 0; i < 8; ++ i)
+        {
+            sram_cache_write(paddr + i, (data >> (i * 8)) & 0xff);
+        }
+        return;
     }
     else
     {
@@ -67,7 +86,7 @@ void write64bits_dram(uint64_t paddr, uint64_t data)
  * @param paddr 内存指令地址
  * @param buf 指令要存放空间
  */
-void readinst_dram(uint64_t paddr, char *buf)
+void cpu_readinst_dram(uint64_t paddr, char *buf)
 {
     for (size_t i = 0; i < MAX_INSTRUCTION_CHAR; i++)
     {
@@ -82,7 +101,7 @@ void readinst_dram(uint64_t paddr, char *buf)
  * @param paddr 写入地址
  * @param str 字符串指令
  */
-void writeinst_dram(uint64_t paddr, const char *str)
+void cpu_writeinst_dram(uint64_t paddr, const char *str)
 {
     int len = strlen(str);
     assert(len < MAX_INSTRUCTION_CHAR);
@@ -92,4 +111,25 @@ void writeinst_dram(uint64_t paddr, const char *str)
     }
 
     my_log(DEBUG_MMU, "write inst: %s, inst len = %d\n", str, len);
+}
+
+// 从磁盘中读取数据到缓存行的一页数据（在该页物理地址的范围内的都可以）
+void bus_read_cacheline(uint64_t paddr, uint8_t *block)
+{
+    uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_OFFSET_LENGTH);
+
+    for (int i = 0; i < (1 << SRAM_CACHE_OFFSET_LENGTH); ++i)
+    {
+        block[i] = pm[dram_base + i];
+    }
+}
+
+void bus_write_cacheline(uint64_t paddr, uint8_t *block)
+{
+    uint64_t dram_base = ((paddr >> SRAM_CACHE_OFFSET_LENGTH) << SRAM_CACHE_OFFSET_LENGTH);
+
+    for (int i = 0; i < (1 << SRAM_CACHE_OFFSET_LENGTH); ++i)
+    {
+        pm[dram_base + i] = block[i];
+    }
 }

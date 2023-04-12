@@ -609,7 +609,7 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     else if (src_od->type == REG && dst_od->type == MEM_IMM_REG1)
     {
         uint64_t value = *(uint64_t *)src;
-        write64bits_dram(va2pa(dst), value);
+        cput_write64bits_dram(va2pa(dst), value);
 
         reset_condition_flags();
         increase_pc();
@@ -617,7 +617,7 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     // mov 0x8(%rax), %rbx
     else if (src_od->type == MEM_IMM_REG1 && dst_od->type == REG)
     {
-        uint64_t value = read64bits_dram(va2pa(src));
+        uint64_t value = cpu_read64bits_dram(va2pa(src));
         *(uint64_t *)dst = value;
 
         reset_condition_flags();
@@ -647,7 +647,7 @@ static void push_handler(od_t *src_od, od_t *dst_od)
         // dst: empty
         cpu_reg.rsp = cpu_reg.rsp - 8;
         uint64_t value = *(uint64_t *)src;
-        write64bits_dram(va2pa(cpu_reg.rsp), value);
+        cput_write64bits_dram(va2pa(cpu_reg.rsp), value);
 
         reset_condition_flags();
         increase_pc();
@@ -665,7 +665,7 @@ static void pop_handler(od_t *src_od, od_t *dst_od)
 
     if (src_od->type == REG)
     {
-        uint64_t value = read64bits_dram(va2pa(cpu_reg.rsp));
+        uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
         *(uint64_t *)src = value;
         cpu_reg.rsp = cpu_reg.rsp + 0x8;
 
@@ -682,7 +682,7 @@ static void ret_handler(od_t *src_od, od_t *dst_od)
 {
     // src: empty
     // dst: empty
-    uint64_t value = read64bits_dram(va2pa(cpu_reg.rsp));
+    uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
     cpu_reg.rsp = cpu_reg.rsp + 0x8;
     cpu_pc.rip = value;
 
@@ -734,7 +734,7 @@ static void call_handler(od_t *src_od, od_t *dst_od)
 
     // next inst addr
     uint64_t value = cpu_pc.rip + sizeof(char) * MAX_INSTRUCTION_CHAR;
-    write64bits_dram(
+    cput_write64bits_dram(
         va2pa(cpu_reg.rsp),
         value);
     // jump to target function address
@@ -752,7 +752,7 @@ static void leave_handler(od_t *src_od, od_t *dst_od)
     */
 
     cpu_reg.rsp = cpu_reg.rbp;
-    uint64_t old_value = read64bits_dram(va2pa(cpu_reg.rsp));
+    uint64_t old_value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
     cpu_reg.rsp += 8;
     cpu_reg.rbp = old_value;
 
@@ -798,7 +798,7 @@ static void cmp_handler(od_t *src_od, od_t *dst_od)
         // cmpq   $0x1,-0x8(%rbp)
         // 实际上的比较顺序是 -0x8(%rbp) ：$0x1
         // cmp 指令根据两个操作数之差来设置条件码。除了只设置条件码而不更新目的寄存器，cmp 与 sub 行为一样
-        uint64_t dst_val = read64bits_dram(va2pa(dst));
+        uint64_t dst_val = cpu_read64bits_dram(va2pa(dst));
         uint64_t val = dst_val + (~src + 1);
 
         int val_sign = ((val >> 63) & 0x1);
@@ -849,7 +849,7 @@ void instruction_cycle()
 {
     // FETCH: get the instruction string by program counter
     char inst_str[MAX_INSTRUCTION_CHAR];
-    readinst_dram(va2pa(cpu_pc.rip), inst_str);
+    cpu_readinst_dram(va2pa(cpu_pc.rip), inst_str);
 
     my_log(DEBUG_INSTRUCTIONCYCLE, "%8lx    %s\n", cpu_pc.rip, inst_str);
 

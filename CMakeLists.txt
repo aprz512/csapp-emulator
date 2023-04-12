@@ -27,3 +27,7 @@ aux_source_directory(src/algorithm algorithm_source_files)
 
 # 构建 linker
 add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})
+
+# 构建 cache
+file(GLOB cache_src_list src/memory/dram.c src/cpu/sram.c src/test/cache.c)
+add_executable(cache ${cache_src_list})
