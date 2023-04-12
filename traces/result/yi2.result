@@ -1,0 +1,17 @@
+L 0,1 miss 
+L 1,1 hit 
+L 2,1 hit 
+L 3,1 hit 
+S 4,1 hit 
+L 5,1 hit 
+S 6,1 hit 
+L 7,1 hit 
+S 8,1 hit 
+L 9,1 hit 
+S a,1 hit 
+L b,1 hit 
+S c,1 hit 
+L d,1 hit 
+S e,1 hit 
+M f,1 hit hit 
+hits:16 misses:1 evictions:0

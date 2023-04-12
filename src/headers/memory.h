@@ -28,6 +28,10 @@ void cpu_write64bits_dram(uint64_t paddr, uint64_t data);
 void cpu_readinst_dram(uint64_t paddr, char *buf);
 void cpu_writeinst_dram(uint64_t paddr, const char *str);
 
+uint8_t sram_cache_read(uint64_t paddr_value);
+void sram_cache_write(uint64_t paddr_value, uint8_t data);
+void sram_reset();
+
 
 void bus_read_cacheline(uint64_t paddr, uint8_t *block);
 void bus_write_cacheline(uint64_t paddr, uint8_t *block);

@@ -1,0 +1,6 @@
+L 10,4 miss 
+S 18,4 hit 
+L 20,4 hit 
+S 28,4 hit 
+S 50,4 miss 
+hits:3 misses:2 evictions:0

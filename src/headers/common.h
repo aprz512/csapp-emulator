@@ -26,17 +26,19 @@
 #define DEBUG_PARSEINST             (0x100)
 #define DEBUG_DATASTRUCTURE         (0x200)
 #define DEBUG_TRIE                  (0x400)
+#define DEBUG_CACHE                  (0x800)
 
-#define DEBUG_VERBOSE_SET           (0x241)
+#define DEBUG_VERBOSE_SET           (0x800)
 
 // do page walk
 #define DEBUG_ENABLE_PAGE_WALK      (0)
 
 // use sram cache for memory access 
-#define DEBUG_ENABLE_SRAM_CACHE     (0)
+#define DEBUG_ENABLE_SRAM_CACHE     (1)
 
 // printf wrapper
 uint64_t debug_printf(uint64_t open_set, const char *format, ...);
+uint64_t my_log(uint64_t open_set, const char *format, ...);
 
 // type converter
 // uint32 to its equivalent float with rounding
