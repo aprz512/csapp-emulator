@@ -33,4 +33,8 @@ file(GLOB cache_src_list src/memory/dram.c src/cpu/sram.c src/test/cache.c src/c
 add_executable(cache ${cache_src_list})
 
 # 非缓存测试构建，请注释掉改行
-add_definitions(-DCACHE_TEST)
+# add_definitions(-DCACHE_TEST)
+
+# 构建 mesi
+file(GLOB mesi_src_list src/cpu/mesi.c)
+add_executable(mesi ${mesi_src_list})
