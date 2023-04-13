@@ -193,11 +193,12 @@ void sram_cache_write(uint64_t paddr_value, uint8_t data)
     if (victim->state == CACHE_LINE_DIRTY)
     {
         bus_write_cacheline(paddr.paddr_value, (uint8_t *)&(victim->block));
+        victim->state = CACHE_LINE_INVALID;
     }
 
-    // need replacement
+    // write-allocate
     bus_read_cacheline(paddr.paddr_value, (uint8_t *)&(victim->block));
-    victim->state = CACHE_LINE_CLEAN;
+    victim->state = CACHE_LINE_DIRTY;
     victim->time = 0;
     victim->tag = paddr.CT;
     victim->block[paddr.CO] = data;
