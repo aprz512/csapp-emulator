@@ -38,3 +38,8 @@ add_executable(cache ${cache_src_list})
 # 构建 mesi
 file(GLOB mesi_src_list src/cpu/mesi.c)
 add_executable(mesi ${mesi_src_list})
+
+# 构建 false sharing
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+file(GLOB false_sharing_src_list src/test/falsesharing.c)
+add_executable(false_sharing ${false_sharing_src_list})
