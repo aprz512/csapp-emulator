@@ -13,9 +13,6 @@ file(GLOB_RECURSE source_files src/*.c)
 
 include_directories(src)
 
-# 构建 emulater
-add_executable(emulater ${source_files})
-
 # 搜索目录下的所有.cpp文件
 aux_source_directory(src/linker linker_source_files)
 
@@ -25,21 +22,32 @@ aux_source_directory(src/common common_source_files)
 # 搜索目录下的所有.cpp文件
 aux_source_directory(src/algorithm algorithm_source_files)
 
+# 构建 emulater
+add_executable(emulater ${source_files})
+
 # 构建 linker
-add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})
+#add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})
 
 # 构建 cache
-file(GLOB cache_src_list src/memory/dram.c src/cpu/sram.c src/test/cache.c src/common/convert.c src/common/log.c)
-add_executable(cache ${cache_src_list})
+#file(GLOB cache_src_list src/memory/dram.c src/cpu/sram.c src/test/cache.c src/common/convert.c src/common/log.c)
+#add_executable(cache ${cache_src_list})
 
 # 非缓存测试构建，请注释掉改行
 # add_definitions(-DCACHE_TEST)
 
 # 构建 mesi
-file(GLOB mesi_src_list src/cpu/mesi.c)
-add_executable(mesi ${mesi_src_list})
+#file(GLOB mesi_src_list src/cpu/mesi.c)
+#add_executable(mesi ${mesi_src_list})
 
 # 构建 false sharing
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
-file(GLOB false_sharing_src_list src/test/falsesharing.c)
-add_executable(false_sharing ${false_sharing_src_list})
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
+#file(GLOB false_sharing_src_list src/test/falsesharing.c)
+#add_executable(false_sharing ${false_sharing_src_list})
+
+# 构建 implicit malloc
+file(GLOB implicit_malloc_src src/malloc/check.c src/malloc/implicit_malloc.c src/malloc/util.c src/algorithm/linkedlist.c)
+add_executable(implicit_malloc ${implicit_malloc_src})
+
+# 构建 explicit malloc
+#file(GLOB explicit_malloc_src src/malloc/check.c src/malloc/explicit_malloc.c src/malloc/util.c src/algorithm/linkedlist.c)
+#add_executable(explicit_malloc ${explicit_malloc_src})
