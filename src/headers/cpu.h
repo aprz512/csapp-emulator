@@ -261,11 +261,27 @@ typedef struct
 } cpu_cr_t;
 cpu_cr_t cpu_controls;
 
+// we only use stack0 of TSS
+// This information is stored in main memory
+typedef struct TSS_S0
+{
+    uint64_t ESP0;
+    uint64_t SS0;
+} tss_s0_t;
+
+// TSS are stored in DRAM
+// Intel thinks that each process can have its own TSS.
+// But we can use only one TSS globally.
+// pointing to Task-State Segment (in main memory) of the current process
+tss_s0_t tr_global_tss;
+
 // move to common.h to be shared by linker
 // #define MAX_INSTRUCTION_CHAR 64
 #define NUM_INSTRTYPE 14
 
 // CPU's instruction cycle: execution of instructions
 void instruction_cycle();
+
+uint64_t mmu_vaddr_pagefault;
 
 #endif

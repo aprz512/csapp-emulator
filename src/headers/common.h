@@ -51,17 +51,4 @@ uint64_t string2uint_range(const char *str, int start, int end);
 // commonly shared variables
 #define MAX_INSTRUCTION_CHAR (64)
 
-/*======================================*/
-/*      clean up events                 */
-/*======================================*/
-void add_cleanup_event(void *func);
-void finally_cleanup();
-
-/*======================================*/
-/*      wrap of the memory              */
-/*======================================*/
-void *tag_malloc(uint64_t size, char *tagstr);
-int tag_free(void *ptr);
-void tag_sweep(char *tagstr);
-
 #endif

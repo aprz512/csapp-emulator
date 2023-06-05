@@ -60,7 +60,7 @@ void test_malloc_and_free()
             if (ptr != 0)
             {
                 printf("linkedlist_add\n");
-                ptrs = linkedlist_add(ptrs, ptr);
+                linkedlist_add(ptrs, ptr);
             }
         }
         else

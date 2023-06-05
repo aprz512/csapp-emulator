@@ -13,14 +13,16 @@ int main()
     char elf_fn[2][64] = {
         "main",
         "sum"};
-    elf_t **srcs = tag_malloc(elf_num * sizeof(elf_t *), "link");
+
+        
+    elf_t **srcs = malloc(elf_num * sizeof(elf_t *));
     for (int i = 0; i < elf_num; ++i)
     {
         char elf_fullpath[100];
         sprintf(elf_fullpath, "%s/%s.elf.txt", "../linker", elf_fn[i]);
         printf("%s\n", elf_fullpath);
 
-        srcs[i] = tag_malloc(sizeof(elf_t), "link");
+        srcs[i] = malloc(sizeof(elf_t));
         parse_elf(elf_fullpath, srcs[i]);
     }
 
@@ -39,7 +41,7 @@ int main()
         free_elf(srcs[i]);
     }
 
-    tag_free(srcs);
+    free(srcs);
 
     return 0;
 }

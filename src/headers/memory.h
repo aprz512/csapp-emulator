@@ -53,7 +53,7 @@ typedef union
     struct
     {
         uint64_t _present : 1;
-        uint64_t swap_id : 63; // disk address
+        uint64_t saddr : 63; // disk address
     };
 } pte123_t; // PGD, PUD, PMD
 
@@ -82,7 +82,7 @@ typedef union
     struct
     {
         uint64_t _present : 1; // present = 0
-        uint64_t swap_id : 63; // disk address
+        uint64_t saddr : 63; // disk address
     };
 } pte4_t; // PT
 
@@ -91,14 +91,14 @@ typedef struct
 {
     int allocated;
     int dirty;
-    int time; // LRU cache
-    uint64_t swap_id;   // 当一个 pte 被放入 swap 区域的时候，需要记录一下映射，以免后面找不到了
+    int time; // LRU cache: 0 - Fresh
 
-    pte4_t *pte4; // the reversed mapping: from PPN to page table entry
+    // real world: mapping to anon_vma or address_space
+    // we simply the situation here
+    // TODO: if multiple processes are using this page? E.g. Shared library
+    pte4_t *pte4;   // the reversed mapping: from PPN to page table entry
+    uint64_t saddr; // binding the revesed mapping with mapping to disk
 } pd_t;
-
-// 反向映射，从 PM 到 VM
-pd_t page_map[MAX_NUM_PHYSICAL_PAGE];
 
 /*======================================*/
 /*      memory R/W                      */

@@ -9,6 +9,7 @@
 #include "headers/memory.h"
 #include "headers/mmu.h"
 #include "headers/instruction.h"
+#include "headers/interrupt.h"
 
 /*======================================*/
 /*      parse assembly instruction      */
@@ -452,7 +453,7 @@ static int parse_operator(const char *str)
 {
     if (operator_trie == NULL)
     {
-        init_t operator_init_elements[11] = {
+        init_t operator_init_elements[13] = {
             {"mov", 0},
             {"push", 1},
             {"pop", 2},
@@ -464,6 +465,7 @@ static int parse_operator(const char *str)
             {"cmpq", 8},
             {"jne", 9},
             {"jmp", 10},
+            {"int", 11}
         };
 
         init_operator_tree(&operator_trie, operator_init_elements, sizeof(operator_init_elements) / sizeof(init_t));
@@ -555,6 +557,7 @@ static void sub_handler(od_t *src_od, od_t *dst_od);
 static void cmp_handler(od_t *src_od, od_t *dst_od);
 static void jne_handler(od_t *src_od, od_t *dst_od);
 static void jmp_handler(od_t *src_od, od_t *dst_od);
+static void int_handler(od_t *src_od, od_t *dst_od);
 
 // handler table storing the handlers to different instruction types
 typedef void (*handler_t)(od_t *, od_t *);
@@ -571,6 +574,7 @@ static handler_t handler_table[NUM_INSTRTYPE] = {
     &cmp_handler,   // 8
     &jne_handler,   // 9
     &jmp_handler,   // 10
+    &int_handler,
 };
 
 // update the rip pointer to the next instruction sequentially
@@ -609,7 +613,7 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     else if (src_od->type == REG && dst_od->type == MEM_IMM_REG1)
     {
         uint64_t value = *(uint64_t *)src;
-        cput_write64bits_dram(va2pa(dst), value);
+        cpu_write64bits_dram(va2pa(dst), value);
 
         reset_condition_flags();
         increase_pc();
@@ -647,7 +651,7 @@ static void push_handler(od_t *src_od, od_t *dst_od)
         // dst: empty
         cpu_reg.rsp = cpu_reg.rsp - 8;
         uint64_t value = *(uint64_t *)src;
-        cput_write64bits_dram(va2pa(cpu_reg.rsp), value);
+        cpu_write64bits_dram(va2pa(cpu_reg.rsp), value);
 
         reset_condition_flags();
         increase_pc();
@@ -734,7 +738,7 @@ static void call_handler(od_t *src_od, od_t *dst_od)
 
     // next inst addr
     uint64_t value = cpu_pc.rip + sizeof(char) * MAX_INSTRUCTION_CHAR;
-    cput_write64bits_dram(
+    cpu_write64bits_dram(
         va2pa(cpu_reg.rsp),
         value);
     // jump to target function address
@@ -843,10 +847,24 @@ static void jmp_handler(od_t *src_od, od_t *dst_od)
     reset_condition_flags();
 }
 
+// time, the craft of god
+static uint64_t global_time = 0;
+static uint64_t timer_period = 5;
+
 // instruction cycle is implemented in CPU
 // the only exposed interface outside CPU
 void instruction_cycle()
 {
+    // this is the entry point of the re-execution of
+    // interrupt return instruction.
+    // When a new process is scheduled, the first instruction/
+    // return instruction should start here, jumping out of the
+    // call stack of old process.
+    // This is especially useful for page fault handling.
+    setjmp(USER_INSTRUCTION_ON_IRET);
+
+    global_time += 1;
+
     // FETCH: get the instruction string by program counter
     char inst_str[MAX_INSTRUCTION_CHAR];
     cpu_readinst_dram(va2pa(cpu_pc.rip), inst_str);
@@ -861,6 +879,12 @@ void instruction_cycle()
     handler_t handler = handler_table[inst.op];
     // update CPU and memory according the instruction
     handler(&(inst.src), &(inst.dst));
+
+    // check timer interrupt from APIC
+    if ((global_time % timer_period) == 0)
+    {
+        interrupt_stack_switching(0x81);
+    }
 }
 
 void print_register()
@@ -902,5 +926,26 @@ void print_stack()
         }
         printf("\n");
         va -= 8;
+    }
+}
+
+void int_handler(od_t *src_od, od_t *dst_od)
+{
+    if (src_od->type == IMM)
+    {
+        // src: interrupt vector
+
+        // Be careful here. Think why we need to increase RIP before interrupt?
+        // This `int` instruction is executed by process 1,
+        // but interrupt will cause OS's scheduling to process 2.
+        // So this `int_handler` will not return.
+        // When the execution of process 1 resumed, the system call is finished.
+        // We want to execute the next instruction, so RIP pushed to trap frame
+        // must be the next instruction.
+        increase_pc();
+        cpu_flags.__flags_value = 0;
+
+        // This function will not return.
+        interrupt_stack_switching(src_od->imm);
     }
 }

@@ -6,7 +6,7 @@
 
 typedef struct
 {
-
+    int open;
     int cache_hit_count;
     int cache_miss_count;
     int cache_evict_count;
@@ -18,22 +18,13 @@ typedef struct
 
 } cache_test_tool_t;
 
-void increase_hit_count();
+cache_test_tool_t cache_test_tool;
 
-// void decrease_hit_count() {
-//     cache_test_tool.cache_hit_count--;
-// }
+void increase_hit_count();
 
 void increase_miss_count();
 
-// void decrease_miss_count() {
-//     cache_test_tool.cache_hit_count--;
-// }
-
 void increase_evicted_count();
-// void decrease_evicted_count() {
-//     cache_test_tool.cache_hit_count--;
-// }
 
 void fill_trace_buf(char *result);
 
