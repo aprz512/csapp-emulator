@@ -61,7 +61,7 @@ static void TestPageFaultHandlingCase1()
     address_t fault_addr = {.address_value = 0x7fff1234};
     address_t code_addr = {.address_value = cpu_pc.rip};
     
-    page_map_init();
+    page_map_init();//2147422772
 
     // pcb is needed to trigger page fault
     pcb_t p1;
@@ -87,9 +87,9 @@ static void TestPageFaultHandlingCase1()
 
     // load code to frame 0
     char code[3][MAX_INSTRUCTION_CHAR] = {
-        "mov %rsp, 0x7fff1234",
-        "mov $1, %rax",
-        "mov $2, %rax",
+        "mov %rsp,0x7fff1234",
+        "mov $1,%rax",
+        "mov $2,%rax",
     };
     memcpy(
         (char *)(&pm[0 + code_addr.ppo]),
@@ -163,9 +163,9 @@ static void TestPageFaultHandlingCase2()
 
     // load code to frame 0
     char code[3][MAX_INSTRUCTION_CHAR] = {
-        "mov %rsp, 0x7fff1234",
-        "mov $1, %rax",
-        "mov $2, %rax",
+        "mov %rsp,0x7fff1234",
+        "mov $1,%rax",
+        "mov $2,%rax",
     };
     memcpy(
         (char *)(&pm[0 + code_addr.ppo]),
@@ -242,9 +242,9 @@ static void TestPageFaultHandlingCase3()
 
     // load code to frame 0
     char code[3][MAX_INSTRUCTION_CHAR] = {
-        "mov %rsp, 0x7fff1234",
-        "mov $1, %rax",
-        "mov $2, %rax",
+        "mov %rsp,0x7fff1234",
+        "mov $1,%rax",
+        "mov $2,%rax",
     };
     memcpy(
         (char *)(&pm[0 + code_addr.ppo]),

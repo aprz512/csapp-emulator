@@ -68,11 +68,11 @@ static void check_register()
 
 static void check_memory()
 {
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdaf8)) == 1);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb18)) == 2);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb38)) == 3);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb58)) == 4);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb78)) == 5);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdaf8, 0)) == 1);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb18, 0)) == 2);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb38, 0)) == 3);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb58, 0)) == 4);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdb78, 0)) == 5);
 }
 
 void SumTestEntry()
@@ -107,7 +107,7 @@ void SumTestEntry()
     // add function address in 0x00400000
     for (int i = 0; i < SUM_INST_lENGTH; ++i)
     {
-        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000), assembly[i]);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, 1), assembly[i]);
     }
 
     int time = 0;

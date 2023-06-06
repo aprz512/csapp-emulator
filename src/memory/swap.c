@@ -26,7 +26,7 @@ void set_pagemap_swapaddr(uint64_t ppn, uint64_t swap_address);
 #define SWAP_ADDRESS_MIN (100)
 
 // disk address counter
-static char *SWAP_FILE_DIRECTORY = "./files/swap";
+static char *SWAP_FILE_DIRECTORY = "../files/swap";
 static uint64_t internal_swap_addr = SWAP_ADDRESS_MIN;
 
 uint64_t allocate_swappage(uint64_t ppn)

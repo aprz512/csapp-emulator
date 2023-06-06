@@ -18,9 +18,10 @@ static uint64_t page_walk(uint64_t vaddr_value, int write_request);
  * @param vaddr
  * @return uint64_t
  */
-uint64_t va2pa(uint64_t vaddr)
+uint64_t va2pa(uint64_t vaddr, int write_request)
 {
-    return vaddr % PHYSICAL_MEMORY_SPACE;
+    // return vaddr % PHYSICAL_MEMORY_SPACE;
+    return page_walk(vaddr, write_request);
 }
 
 static uint64_t page_walk(uint64_t vaddr_value, int write_request)

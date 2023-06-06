@@ -465,8 +465,7 @@ static int parse_operator(const char *str)
             {"cmpq", 8},
             {"jne", 9},
             {"jmp", 10},
-            {"int", 11}
-        };
+            {"int", 11}};
 
         init_operator_tree(&operator_trie, operator_init_elements, sizeof(operator_init_elements) / sizeof(init_t));
     }
@@ -610,10 +609,10 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
         increase_pc();
     }
     // mov %rax, 0x8(%rbx)
-    else if (src_od->type == REG && dst_od->type == MEM_IMM_REG1)
+    else if ((src_od->type == REG && dst_od->type == MEM_IMM_REG1) || (src_od->type == REG && dst_od->type == MEM_IMM))
     {
         uint64_t value = *(uint64_t *)src;
-        cpu_write64bits_dram(va2pa(dst), value);
+        cpu_write64bits_dram(va2pa(dst, 1), value);
 
         reset_condition_flags();
         increase_pc();
@@ -621,7 +620,7 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     // mov 0x8(%rax), %rbx
     else if (src_od->type == MEM_IMM_REG1 && dst_od->type == REG)
     {
-        uint64_t value = cpu_read64bits_dram(va2pa(src));
+        uint64_t value = cpu_read64bits_dram(va2pa(src, 0));
         *(uint64_t *)dst = value;
 
         reset_condition_flags();
@@ -651,7 +650,7 @@ static void push_handler(od_t *src_od, od_t *dst_od)
         // dst: empty
         cpu_reg.rsp = cpu_reg.rsp - 8;
         uint64_t value = *(uint64_t *)src;
-        cpu_write64bits_dram(va2pa(cpu_reg.rsp), value);
+        cpu_write64bits_dram(va2pa(cpu_reg.rsp, 1), value);
 
         reset_condition_flags();
         increase_pc();
@@ -669,7 +668,7 @@ static void pop_handler(od_t *src_od, od_t *dst_od)
 
     if (src_od->type == REG)
     {
-        uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
+        uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp, 0));
         *(uint64_t *)src = value;
         cpu_reg.rsp = cpu_reg.rsp + 0x8;
 
@@ -686,7 +685,7 @@ static void ret_handler(od_t *src_od, od_t *dst_od)
 {
     // src: empty
     // dst: empty
-    uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
+    uint64_t value = cpu_read64bits_dram(va2pa(cpu_reg.rsp, 0));
     cpu_reg.rsp = cpu_reg.rsp + 0x8;
     cpu_pc.rip = value;
 
@@ -739,7 +738,7 @@ static void call_handler(od_t *src_od, od_t *dst_od)
     // next inst addr
     uint64_t value = cpu_pc.rip + sizeof(char) * MAX_INSTRUCTION_CHAR;
     cpu_write64bits_dram(
-        va2pa(cpu_reg.rsp),
+        va2pa(cpu_reg.rsp, 1),
         value);
     // jump to target function address
     cpu_pc.rip = src;
@@ -756,7 +755,7 @@ static void leave_handler(od_t *src_od, od_t *dst_od)
     */
 
     cpu_reg.rsp = cpu_reg.rbp;
-    uint64_t old_value = cpu_read64bits_dram(va2pa(cpu_reg.rsp));
+    uint64_t old_value = cpu_read64bits_dram(va2pa(cpu_reg.rsp, 0));
     cpu_reg.rsp += 8;
     cpu_reg.rbp = old_value;
 
@@ -802,7 +801,7 @@ static void cmp_handler(od_t *src_od, od_t *dst_od)
         // cmpq   $0x1,-0x8(%rbp)
         // 实际上的比较顺序是 -0x8(%rbp) ：$0x1
         // cmp 指令根据两个操作数之差来设置条件码。除了只设置条件码而不更新目的寄存器，cmp 与 sub 行为一样
-        uint64_t dst_val = cpu_read64bits_dram(va2pa(dst));
+        uint64_t dst_val = cpu_read64bits_dram(va2pa(dst, 0));
         uint64_t val = dst_val + (~src + 1);
 
         int val_sign = ((val >> 63) & 0x1);
@@ -867,7 +866,7 @@ void instruction_cycle()
 
     // FETCH: get the instruction string by program counter
     char inst_str[MAX_INSTRUCTION_CHAR];
-    cpu_readinst_dram(va2pa(cpu_pc.rip), inst_str);
+    cpu_readinst_dram(va2pa(cpu_pc.rip, 0), inst_str);
 
     my_log(DEBUG_INSTRUCTIONCYCLE, "%8lx    %s\n", cpu_pc.rip, inst_str);
 
@@ -911,7 +910,7 @@ void print_stack()
     }
 
     int n = 10;
-    uint64_t *high = (uint64_t *)&pm[va2pa(cpu_reg.rsp)];
+    uint64_t *high = (uint64_t *)&pm[va2pa(cpu_reg.rsp, 0)];
     high = &high[n];
     uint64_t va = cpu_reg.rsp + n * 8;
 

@@ -40,6 +40,16 @@ add_executable(
     ${c_source_set}
 )
 
+add_executable(
+    test_pagefault
+    src/test/test_pagefault.c
+    # ${process_source_files}
+    # ${algorithm_source_files}
+    # ${common_source_files}
+    # src/cpu/isa.c
+    ${c_source_set}
+)
+
 # 构建 linker
 # add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})
 

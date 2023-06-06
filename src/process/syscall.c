@@ -75,7 +75,7 @@ static void write_handler()
     for (int i = 0; i < buf_length; ++ i)
     {
         // print as yellow
-        printf(YELLOWSTR("%c"), pm[va2pa(buf_vaddr)]);
+        printf(YELLOWSTR("%c"), pm[va2pa(buf_vaddr, 0)]);
     }
 }
 

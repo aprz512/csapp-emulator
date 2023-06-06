@@ -41,20 +41,20 @@ static void init_memory()
 {
     // 我们只关心 rbp - rsp 的内存的值
 
-    cpu_write64bits_dram(va2pa(0x7fffffffdc60), 0x00005555554006c0);
-    cpu_write64bits_dram(va2pa(0x7fffffffdc68), 0x1234);
-    cpu_write64bits_dram(va2pa(0x7fffffffdc70), 0xabcd0000);
-    cpu_write64bits_dram(va2pa(0x7fffffffdc78), 0x0);
-    cpu_write64bits_dram(va2pa(0x7fffffffdc80), 0x00005555554006c0);
+    cpu_write64bits_dram(va2pa(0x7fffffffdc60, 1), 0x00005555554006c0);
+    cpu_write64bits_dram(va2pa(0x7fffffffdc68, 1), 0x1234);
+    cpu_write64bits_dram(va2pa(0x7fffffffdc70, 1), 0xabcd0000);
+    cpu_write64bits_dram(va2pa(0x7fffffffdc78, 1), 0x0);
+    cpu_write64bits_dram(va2pa(0x7fffffffdc80, 1), 0x00005555554006c0);
 }
 
 static void check_memory()
 {
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc60)) == 0x00005555554006c0);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc68)) == 0x1234);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc70)) == 0xabcd0000);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc78)) == 0xabcd1234);
-    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc80)) == 0x00005555554006c0);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc60, 0)) == 0x00005555554006c0);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc68, 0)) == 0x1234);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc70, 0)) == 0xabcd0000);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc78, 0)) == 0xabcd1234);
+    assert(cpu_read64bits_dram(va2pa(0x7fffffffdc80, 0)) == 0x00005555554006c0);
 }
 
 void AddTestEntry()
@@ -85,7 +85,7 @@ void AddTestEntry()
     // add function address in 0x00400000
     for (int i = 0; i < ADD_INST_LENGTH; ++i)
     {
-        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000), assembly[i]);
+        cpu_writeinst_dram(va2pa(i * 0x40 + 0x00400000, 1), assembly[i]);
     }
 
     int time = 0;
