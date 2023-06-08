@@ -3,8 +3,8 @@
  * Github:      https://github.com/yangminz/bcst_csapp
  * Bilibili:    https://space.bilibili.com/4564101
  * Zhihu:       https://www.zhihu.com/people/zhao-yang-min
- * This project (code repository and videos) is exclusively owned by yangminz 
- * and shall not be used for commercial and profitting purpose 
+ * This project (code repository and videos) is exclusively owned by yangminz
+ * and shall not be used for commercial and profitting purpose
  * without yangminz's permission.
  */
 
@@ -31,9 +31,9 @@ typedef struct IDT_ENTRY_STRUCT
 idt_entry_t idt[256];
 
 // handlers of IDT
-void pagefault_handler();           // trap gate - exception
-void syscall_handler();             // trap gate - software interrupt / trap
-void timer_handler();               // interrupt gate - local APIC
+void pagefault_handler(); // trap gate - exception
+void syscall_handler();   // trap gate - software interrupt / trap
+void timer_handler();     // interrupt gate - local APIC
 
 // implementation of handlers
 void do_syscall(int syscall_no);
@@ -176,12 +176,14 @@ static void software_push_userframe()
     rsp -= uf_size;
     userframe_t uf = {
         .regs = cpu_reg,
-        .flags = cpu_flags
-    };
+        .flags = cpu_flags};
     memcpy((userframe_t *)rsp, &uf, uf_size);
 
     // push RSP
     cpu_reg.rsp = rsp;
+
+    // printf("software_push_userframe----\n");
+    // print_register();
 }
 
 static void software_pop_userframe()
@@ -200,13 +202,16 @@ static void software_pop_userframe()
     userframe_t uf;
     memcpy(&uf, (trapframe_t *)rsp, uf_size);
     rsp += uf_size;
-    
+
     // restore cpu registers from user frame
     memcpy(&cpu_reg, &uf.regs, sizeof(cpu_reg));
     memcpy(&cpu_flags, &uf.flags, sizeof(cpu_flags));
 
     // pop rsp
     cpu_reg.rsp = rsp;
+
+    // printf("software_pop_userframe----\n");
+    // print_register();
 }
 
 /*  ATTENTION !!!!!!!!
@@ -214,7 +219,7 @@ static void software_pop_userframe()
  *      Thus it's called by process 1, but return to process 2.
  *      So for the invoker (process 1), it's a function that will never return.
  *      We implement this by Non-Local Jump.
- * 
+ *
  *      If you are confused about non-local jumps, check interrupt.h
  *      And the textbook: CSAPP: Exceptional Control Flow: Nonlocal Jumps
  */
@@ -223,7 +228,7 @@ void interrupt_stack_switching(uint64_t int_vec)
 {
     assert(0 <= int_vec && int_vec <= 255);
 
-    //  1.  Temporarily saves (internally) the current contents of 
+    //  1.  Temporarily saves (internally) the current contents of
     //      the SS, ESP, EFLAGS, CS, and EIP registers.
     //  TODO: SS & CS
     trapframe_t tf = {
@@ -231,14 +236,14 @@ void interrupt_stack_switching(uint64_t int_vec)
         .rsp = cpu_reg.rsp,
     };
 
-    //  2.  Loads the segment selector and stack pointer for the new stack 
-    //      (that is, the stack for the privilege level being called) 
+    //  2.  Loads the segment selector and stack pointer for the new stack
+    //      (that is, the stack for the privilege level being called)
     //      from the TSS into the SS and ESP registers and switches to the new stack.
     // stack switching
     // this kstack is allocated in the heap of emulator
     cpu_reg.rsp = get_kstack_top_TSS();
 
-    //  3.  Pushes the temporarily saved SS, ESP, EFLAGS, CS, and EIP values 
+    //  3.  Pushes the temporarily saved SS, ESP, EFLAGS, CS, and EIP values
     //      for the interrupted procedure’s stack onto the new stack.
     //  TODO: SS & CS
     //  TODO: kernel address space & page table mapping
@@ -247,14 +252,14 @@ void interrupt_stack_switching(uint64_t int_vec)
 
     //  4.  Pushes an error code on the new stack (if appropriate).
 
-    //  5.  Loads the segment selector for the new code segment and 
-    //      the new instruction pointer (from the interrupt gate or trap gate) 
+    //  5.  Loads the segment selector for the new code segment and
+    //      the new instruction pointer (from the interrupt gate or trap gate)
     //      into the CS and EIP registers, respectively.
     interrupt_handler_t handler = idt[int_vec].handler;
 
-    //  6.  If the call is through an interrupt gate, 
+    //  6.  If the call is through an interrupt gate,
     //      clears the IF flag in the EFLAGS register.
-    
+
     //  Not needed because our interrupt is in isa.c:instruction_cycle
     //  but for kernel routine the code is running in host's CPU
     //  so emulator's interrupt cannot interrupt host's CPU
@@ -265,7 +270,7 @@ void interrupt_stack_switching(uint64_t int_vec)
 
     // interrupt return (iret instruction in kernel code)
     interrupt_return_stack_switching();
-    
+
     // This function (longjmp) will not return
     // The longjmp will move to the instruction cycle of the newly scheduled process.
     // This interrupt_stack_switching will not return to the old process (invoker).
@@ -322,8 +327,8 @@ void syscall_handler()
     // but we need to simulate kernel stack push & pop.
     // So this is the vaddr of RSP when `do_syscall` returns
     uint64_t rsp_after_do_syscall = cpu_reg.rsp;
-    
-    // The following instructions are executed in the 
+
+    // The following instructions are executed in the
     // left space in the kernel stack
     do_syscall(cpu_reg.rax);
     cpu_reg.rsp = rsp_after_do_syscall;
@@ -342,29 +347,30 @@ static void print_kstack(pcb_t *p)
 {
     uint64_t kstack_bottom_vaddr = (uint64_t)p->kstack;
     uint64_t kstack_top_vaddr = kstack_bottom_vaddr + KERNEL_STACK_SIZE;
-    
+
     uint64_t tfa = kstack_top_vaddr - sizeof(trapframe_t);
     uint64_t ufa = tfa - sizeof(userframe_t);
 
     pcb_t *pcb = get_current_pcb();
 
     // general info
-    printf("Kernel stack info [PID = %ld]\n" \
-            "top vaddr:\t0x%016lx\n" \
-            "bottom vaddr:\t0x%016lx\n" \
-            "RSP now:\t0x%016lx\n" \
-            "RIP now:\t0x%016lx\n", pcb->pid, kstack_top_vaddr, kstack_bottom_vaddr, cpu_reg.rsp, cpu_pc.rip);
-    
+    printf("Kernel stack info [PID = %ld]\n"
+           "top vaddr:\t0x%016lx\n"
+           "bottom vaddr:\t0x%016lx\n"
+           "RSP now:\t0x%016lx\n"
+           "RIP now:\t0x%016lx\n",
+           pcb->pid, kstack_top_vaddr, kstack_bottom_vaddr, cpu_reg.rsp, cpu_pc.rip);
+
     // whole stack
     int size64 = sizeof(uint64_t);
     int num64 = KERNEL_STACK_SIZE / size64;
     int n_cols = 8;
     uint64_t base = kstack_top_vaddr - size64;
-    for (int r = 0; r < 3; ++ r)
+    for (int r = 0; r < 3; ++r)
     {
         printf("[%16lx]  ", base);
 
-        for (int c = 0; c < n_cols; ++ c)
+        for (int c = 0; c < n_cols; ++c)
         {
             uint64_t val64 = *(uint64_t *)base;
 
@@ -396,22 +402,22 @@ static void print_kstack(pcb_t *p)
     // user frame
     printf("=====\nUser frame: 0x%016lx\n", ufa);
     userframe_t *uf = (userframe_t *)ufa;
-    printf("RAX: %016lx\n" \
-            "RBX: %016lx\n" \
-            "RCX: %016lx\n" \
-            "RDX: %016lx\n" \
-            "RSI: %016lx\n" \
-            "RDI: %016lx\n" \
-            "RBP: %016lx\n" \
-            "RSP: %016lx\n" \
-            "CF: %d\tZF: %d\tSF: %d\tOF: %d\n",
-            uf->regs.rax,
-            uf->regs.rbx,
-            uf->regs.rcx,
-            uf->regs.rdx,
-            uf->regs.rsi,
-            uf->regs.rdi,
-            uf->regs.rbp,
-            uf->regs.rsp,
-            uf->flags.CF, uf->flags.ZF, uf->flags.SF, uf->flags.OF);
+    printf("RAX: %016lx\n"
+           "RBX: %016lx\n"
+           "RCX: %016lx\n"
+           "RDX: %016lx\n"
+           "RSI: %016lx\n"
+           "RDI: %016lx\n"
+           "RBP: %016lx\n"
+           "RSP: %016lx\n"
+           "CF: %d\tZF: %d\tSF: %d\tOF: %d\n",
+           uf->regs.rax,
+           uf->regs.rbx,
+           uf->regs.rcx,
+           uf->regs.rdx,
+           uf->regs.rsi,
+           uf->regs.rdi,
+           uf->regs.rbp,
+           uf->regs.rsp,
+           uf->flags.CF, uf->flags.ZF, uf->flags.SF, uf->flags.OF);
 }

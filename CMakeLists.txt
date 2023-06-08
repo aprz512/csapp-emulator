@@ -50,6 +50,16 @@ add_executable(
     ${c_source_set}
 )
 
+add_executable(
+    test_fork
+    src/test/test_fork.c
+    # ${process_source_files}
+    # ${algorithm_source_files}
+    # ${common_source_files}
+    # src/cpu/isa.c
+    ${c_source_set}
+)
+
 # 构建 linker
 # add_executable(linker ${linker_source_files} ${common_source_files} ${algorithm_source_files})
 

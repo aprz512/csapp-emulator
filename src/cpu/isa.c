@@ -10,6 +10,7 @@
 #include "headers/mmu.h"
 #include "headers/instruction.h"
 #include "headers/interrupt.h"
+#include "headers/color.h"
 
 /*======================================*/
 /*      parse assembly instruction      */
@@ -57,6 +58,7 @@ static void parse_instruction(const char *str, inst_t *inst)
         }
 
         // 状态变化
+        //
         if (state == 0)
         {
             if (cur != ' ')
@@ -93,13 +95,13 @@ static void parse_instruction(const char *str, inst_t *inst)
                 state = 5;
             }
         }
-        else if (state == 5)
-        {
-            if (cur == ' ')
-            {
-                state = 6;
-            }
-        }
+        // else if (state == 5)
+        // {
+        //     if (cur == ' ')
+        //     {
+        //         state = 6;
+        //     }
+        // }
 
         // 计算 op od1 od2
         if (state == 1)
@@ -634,7 +636,7 @@ static void mov_handler(od_t *src_od, od_t *dst_od)
     }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -648,16 +650,27 @@ static void push_handler(od_t *src_od, od_t *dst_od)
     {
         // src: register
         // dst: empty
-        cpu_reg.rsp = cpu_reg.rsp - 8;
-        uint64_t value = *(uint64_t *)src;
-        cpu_write64bits_dram(va2pa(cpu_reg.rsp, 1), value);
+        uint64_t tmp_rsp = cpu_reg.rsp - 8;
+        uint64_t paddr = va2pa(tmp_rsp, 1);
 
+        // printf("after rsp = %lx\n", cpu_reg.rsp);
+        uint64_t value = *(uint64_t *)src;
+        cpu_write64bits_dram(paddr, value);
+
+        // printf("paddr = %lx\n", paddr);
+        // for (int i = 0; i < 7; ++i)
+        // {
+        //     // print as yellow
+        //     printf(YELLOWSTR("%c"), pm[va2pa(tmp_rsp, 0) + i]);
+        // }
+
+        cpu_reg.rsp = tmp_rsp;
         reset_condition_flags();
         increase_pc();
     }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -677,7 +690,7 @@ static void pop_handler(od_t *src_od, od_t *dst_od)
     }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -720,7 +733,7 @@ static void add_handler(od_t *src_od, od_t *dst_od)
     }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -788,7 +801,7 @@ static void sub_handler(od_t *src_od, od_t *dst_od)
     }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -816,9 +829,29 @@ static void cmp_handler(od_t *src_od, od_t *dst_od)
 
         increase_pc();
     }
+    else if (src_od->type == IMM && dst_od->type == REG)
+    {
+        // cmpq   $0x1,-0x8(%rbp)
+        // 实际上的比较顺序是 -0x8(%rbp) ：$0x1
+        // cmp 指令根据两个操作数之差来设置条件码。除了只设置条件码而不更新目的寄存器，cmp 与 sub 行为一样
+        uint64_t dst_val = *(uint64_t *)dst;
+        uint64_t val = dst_val + (~src + 1);
+
+        int val_sign = ((val >> 63) & 0x1);
+        int src_sign = ((src >> 63) & 0x1);
+        int dst_sign = ((dst_val >> 63) & 0x1);
+
+        // set condition flags
+        cpu_flags.CF = (val > dst_val); // unsigned
+        cpu_flags.ZF = (val == 0);
+        cpu_flags.SF = val_sign;
+        cpu_flags.OF = (src_sign == 1 && dst_sign == 0 && val_sign == 1) || (src_sign == 0 && dst_sign == 1 && val_sign == 0);
+
+        increase_pc();
+    }
     else
     {
-        my_log(DEBUG_INSTRUCTIONCYCLE, "unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
+        printf("unsupport operand type, src = %d, dst = %d\n", src_od->type, dst_od->type);
     }
 }
 
@@ -848,7 +881,7 @@ static void jmp_handler(od_t *src_od, od_t *dst_od)
 
 // time, the craft of god
 static uint64_t global_time = 0;
-static uint64_t timer_period = 5;
+static uint64_t timer_period = 50000;
 
 // instruction cycle is implemented in CPU
 // the only exposed interface outside CPU
@@ -877,6 +910,7 @@ void instruction_cycle()
     // EXECUTE: get the function pointer or handler by the operator
     handler_t handler = handler_table[inst.op];
     // update CPU and memory according the instruction
+    printf("%s\n", inst_str);
     handler(&(inst.src), &(inst.dst));
 
     // check timer interrupt from APIC
@@ -888,10 +922,10 @@ void instruction_cycle()
 
 void print_register()
 {
-    if ((DEBUG_VERBOSE_SET & DEBUG_REGISTERS) == 0x0)
-    {
-        return;
-    }
+    // if ((DEBUG_VERBOSE_SET & DEBUG_REGISTERS) == 0x0)
+    // {
+    //     return;
+    // }
 
     printf("rax = %16lx\trbx = %16lx\trcx = %16lx\trdx = %16lx\n",
            cpu_reg.rax, cpu_reg.rbx, cpu_reg.rcx, cpu_reg.rdx);

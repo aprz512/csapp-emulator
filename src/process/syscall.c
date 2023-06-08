@@ -18,7 +18,6 @@
 #include "headers/interrupt.h"
 #include "headers/syscall.h"
 #include "headers/color.h"
-#include "headers/mmu.h"
 
 typedef void (*syscall_handler_t)();
 
@@ -50,7 +49,7 @@ static void destory_user_registers()
 // initialize of IDT
 void syscall_init()
 {
-    syscall_table[1].handler = write_handler;
+    syscall_table[01].handler = write_handler;
     syscall_table[39].handler = getpid_handler;
     syscall_table[57].handler = fork_handler;
     syscall_table[59].handler = execve_handler;
@@ -70,28 +69,28 @@ static void write_handler()
 
     destory_user_registers();
 
+    // 0x00400380 + 0x40
+    // printf("rdi = %lx, rsi = %lx\n", file_no, buf_vaddr);
+
     // The following resource are allocated on KERNEL STACK
     // TODO: this works only with NAVIE VA2PA
     for (int i = 0; i < buf_length; ++ i)
     {
         // print as yellow
-        printf(YELLOWSTR("%c"), pm[va2pa(buf_vaddr, 0)]);
+        printf(YELLOWSTR("%c"), pm[va2pa(buf_vaddr + i, 0)]);
     }
 }
 
 static void getpid_handler()
-{
-    printf("getpid...");
-
-}
+{}
 
 static void fork_handler()
 {
-    // uint64_t kernel_rsp = cpu_reg.rsp;
-    // destory_user_registers();
-    // cpu_reg.rsp = kernel_rsp;
+    uint64_t kernel_rsp = cpu_reg.rsp;
+    destory_user_registers();
+    cpu_reg.rsp = kernel_rsp;
 
-    // syscall_fork();
+    syscall_fork();
 }
 
 static void execve_handler()

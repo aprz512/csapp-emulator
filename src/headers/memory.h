@@ -86,6 +86,7 @@ typedef union
     };
 } pte4_t; // PT
 
+#define MAX_REVERSED_MAPPING_NUMBER (4)
 // physical page descriptor
 typedef struct
 {
@@ -93,10 +94,30 @@ typedef struct
     int dirty;
     int time; // LRU cache: 0 - Fresh
 
-    // real world: mapping to anon_vma or address_space
-    // we simply the situation here
-    // TODO: if multiple processes are using this page? E.g. Shared library
-    pte4_t *pte4;   // the reversed mapping: from PPN to page table entry
+    /*  real world: mapping to anon_vma or address_space
+        we simply the situation here:
+        We limit that one physical frame can be shared by 
+        at most MAX_REVERSED_MAPPING_NUMBER PTEs
+        And use mappings to manage them.
+
+            ** anon_vma
+        The reversed mapping: from PPN to anonymous VMAs
+        This physical frame is in anonymous area, e.g. [stack], [heap]
+        Multiple processes are sharing the same anonymous area
+        This happens in Fork and Copy-On-Write
+        We need reversed mapping to modify all related PTEs from RO to RW
+
+            ** address_space
+        The reversed mapping: from PPN to file-backed VMAs
+        This physical frame is in file-backed area, e.g., .text, .data
+        Multiple processes are sharing the same file-backed area
+        This happens in Fork and Copy-On-Write
+    */
+    pte4_t *mapping[MAX_REVERSED_MAPPING_NUMBER];
+
+    // count the number of processes sharing this physical frame
+    // Actually it must be the number of non-NULL in mapping field
+    uint64_t reversed_counter;
     uint64_t saddr; // binding the revesed mapping with mapping to disk
 } pd_t;
 

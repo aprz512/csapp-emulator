@@ -28,13 +28,13 @@
 #define DEBUG_TRIE                  (0x400)
 #define DEBUG_CACHE                  (0x800)
 
-#define DEBUG_VERBOSE_SET           (0x800)
+#define DEBUG_VERBOSE_SET           (0)
 
 // do page walk
 #define DEBUG_ENABLE_PAGE_WALK      (0)
 
 // use sram cache for memory access 
-#define DEBUG_ENABLE_SRAM_CACHE     (1)
+#define DEBUG_ENABLE_SRAM_CACHE     (0)
 
 // printf wrapper
 uint64_t debug_printf(uint64_t open_set, const char *format, ...);
